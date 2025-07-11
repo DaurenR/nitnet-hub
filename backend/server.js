@@ -1,22 +1,59 @@
-import express from 'express';
-import cors from 'cors';
-import pg from 'pg';
-import dotenv from 'dotenv';
+const express = require("express");
+const cors = require("cors");
+const { PrismaClient } = require("@prisma/client");
 
-dotenv.config();
 const app = express();
+const prisma = new PrismaClient();
+
 app.use(cors());
 app.use(express.json());
 
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
+app.get("/channels", async (req, res) => {
+  try {
+    const channels = await prisma.channels.findMany();
+    const fixed = channels.map(channel => ({
+      ...channel,
+      id: Number(channel.id)
+    }));
+    res.json(fixed);
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
-app.get('/api/channels', async (req, res) => {
-  const result = await pool.query('SELECT * FROM channels');
-  res.json(result.rows);
+
+app.post("/channels", async (req, res) => {
+  try {
+    const newChannel = await prisma.channels.create({
+      data: {
+        id: req.body.id,
+        network: req.body.network,
+        agencyName: req.body.agencyName,
+        physicalAddress: req.body.physicalAddress,
+        serviceName: req.body.serviceName,
+        bandwidthKbps: req.body.bandwidthKbps,
+        tariffPlan: req.body.tariffPlan,
+        connectionType: req.body.connectionType,
+        provider: req.body.provider,
+        region: req.body.region,
+        ipAddress: req.body.ipAddress,
+        p2pIp: req.body.p2pIp,
+        manager: req.body.manager,
+        updatedBy: req.body.updatedBy
+      }
+    });
+    res.json({
+      ...newChannel,
+      id: Number(newChannel.id)
+    });
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
-app.listen(5000, () => {
-  console.log('Server is running on port 5000');
+
+app.listen(3001, () => {
+  console.log("Server running on http://localhost:3001");
 });
