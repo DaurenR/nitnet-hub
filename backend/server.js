@@ -10,17 +10,95 @@ app.use(express.json());
 
 app.get("/channels", async (req, res) => {
   try {
-    const channels = await prisma.channels.findMany();
+    const { provider, agency, region, sort, order } = req.query;
+
+    const where = {};
+    if (provider) where.provider = { contains: provider, mode: 'insensitive' };
+    if (agency) where.agencyName = { contains: agency, mode: 'insensitive' };
+    if (region) where.region = { contains: region, mode: 'insensitive' };
+
+    let orderBy = undefined;
+    if (sort) {
+      orderBy = {
+        [sort]: order === 'desc' ? 'desc' : 'asc'
+      };
+    }
+
+    const channels = await prisma.channels.findMany({
+      where,
+      orderBy,
+    });
+
     const fixed = channels.map(channel => ({
       ...channel,
       id: Number(channel.id)
     }));
+
     res.json(fixed);
   } catch (err) {
     console.error("ERROR:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+
+app.get("/channels/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const channel = await prisma.channels.findUnique({
+      where: { id }
+    });
+
+    if (!channel) {
+      return res.status(404).json({ error: "Channel not found" });
+    }
+
+    res.json({
+      ...channel,
+      id: Number(channel.id)
+    });
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.put("/channels/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const data = req.body;
+
+    const updatedChannel = await prisma.channels.update({
+      where: { id },
+      data: {
+        network: data.network,
+        agencyName: data.agencyName,
+        physicalAddress: data.physicalAddress,
+        serviceName: data.serviceName,
+        bandwidthKbps: data.bandwidthKbps,
+        tariffPlan: data.tariffPlan,
+        connectionType: data.connectionType,
+        provider: data.provider,
+        region: data.region,
+        ipAddress: data.ipAddress,
+        p2pIp: data.p2pIp,
+        manager: data.manager,
+        updatedBy: data.updatedBy,
+        updatedAt: new Date()
+      }
+    });
+
+    res.json({
+      ...updatedChannel,
+      id: Number(updatedChannel.id)
+    });
+
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 
 app.post("/channels", async (req, res) => {
