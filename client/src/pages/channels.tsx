@@ -16,7 +16,13 @@ type Props = {
 
 export default function ChannelsPage({ channels }: Props) {
   const router = useRouter();
-  const { provider = "", agency = "", region = "", sort = "", order = "" } = router.query;
+  const {
+    provider = "",
+    agency = "",
+    region = "",
+    sort = "",
+    order = "",
+  } = router.query;
 
   const [providerInput, setProviderInput] = useState(provider);
   const [agencyInput, setAgencyInput] = useState(agency);
@@ -35,10 +41,12 @@ export default function ChannelsPage({ channels }: Props) {
     router.push({
       pathname: "/channels",
       query: {
-        provider, agency, region, // сохраняем текущие фильтры
+        provider,
+        agency,
+        region, // сохраняем текущие фильтры
         sort: field,
-        order: nextOrder
-      }
+        order: nextOrder,
+      },
     });
   };
 
@@ -133,7 +141,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   if (sort) searchParams.append("sort", sort.toString());
   if (order) searchParams.append("order", order.toString());
 
-  const res = await fetch(`http://localhost:3001/channels?${searchParams.toString()}`);
+  const res = await fetch(
+    `http://localhost:3001/channels?${searchParams.toString()}`
+  );
   const channels: Channel[] = await res.json();
 
   return {

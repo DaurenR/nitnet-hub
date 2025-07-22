@@ -10,28 +10,23 @@ app.use(express.json());
 
 app.get("/channels", async (req, res) => {
   try {
-    const { provider, agency, region, sort, order } = req.query;
+    const { provider, agency, region, sort, skip = 0, take = 10 } = req.query;
 
-    const where = {};
-    if (provider) where.provider = { contains: provider, mode: 'insensitive' };
-    if (agency) where.agencyName = { contains: agency, mode: 'insensitive' };
-    if (region) where.region = { contains: region, mode: 'insensitive' };
-
-    let orderBy = undefined;
-    if (sort) {
-      orderBy = {
-        [sort]: order === 'desc' ? 'desc' : 'asc'
-      };
-    }
+    const filters = {};
+    if (provider) filters.provider = provider;
+    if (agency) filters.agencyName = agency;
+    if (region) filters.region = region;
 
     const channels = await prisma.channels.findMany({
-      where,
-      orderBy,
+      where: filters,
+      orderBy: sort ? { [sort]: "asc" } : undefined,
+      skip: Number(skip),
+      take: Number(take),
     });
 
-    const fixed = channels.map(channel => ({
+    const fixed = channels.map((channel) => ({
       ...channel,
-      id: Number(channel.id)
+      id: Number(channel.id),
     }));
 
     res.json(fixed);
@@ -41,12 +36,11 @@ app.get("/channels", async (req, res) => {
   }
 });
 
-
 app.get("/channels/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     const channel = await prisma.channels.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!channel) {
@@ -55,7 +49,7 @@ app.get("/channels/:id", async (req, res) => {
 
     res.json({
       ...channel,
-      id: Number(channel.id)
+      id: Number(channel.id),
     });
   } catch (err) {
     console.error("ERROR:", err);
@@ -84,22 +78,19 @@ app.put("/channels/:id", async (req, res) => {
         p2pIp: data.p2pIp,
         manager: data.manager,
         updatedBy: data.updatedBy,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     res.json({
       ...updatedChannel,
-      id: Number(updatedChannel.id)
+      id: Number(updatedChannel.id),
     });
-
   } catch (err) {
     console.error("ERROR:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
-
 
 app.post("/channels", async (req, res) => {
   try {
@@ -118,19 +109,18 @@ app.post("/channels", async (req, res) => {
         ipAddress: req.body.ipAddress,
         p2pIp: req.body.p2pIp,
         manager: req.body.manager,
-        updatedBy: req.body.updatedBy
-      }
+        updatedBy: req.body.updatedBy,
+      },
     });
     res.json({
       ...newChannel,
-      id: Number(newChannel.id)
+      id: Number(newChannel.id),
     });
   } catch (err) {
     console.error("ERROR:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 app.listen(3001, () => {
   console.log("Server running on http://localhost:3001");

@@ -1,4 +1,5 @@
 import { GetServerSideProps } from "next";
+import { useRouter } from "next/router";
 
 type Channel = {
   id: number;
@@ -19,44 +20,80 @@ type Channel = {
 };
 
 type Props = {
-  channel: Channel;
+  channels: Channel[];
 };
 
-export default function ChannelDetail({ channel }: Props) {
+export default function ChannelsPage({ channels }: Props) {
+  const router = useRouter();
+  const { skip = "0", take = "10" } = router.query;
+
+  const currentSkip = Number(skip);
+  const currentTake = Number(take);
+
   return (
     <div className="p-8">
-      <h1 className="text-3xl mb-6 font-bold">
-        Канал #{channel.id}
-      </h1>
-      <div className="space-y-2">
-        <div><strong>Agency:</strong> {channel.agencyName}</div>
-        <div><strong>Provider:</strong> {channel.provider}</div>
-        <div><strong>Service:</strong> {channel.serviceName}</div>
-        <div><strong>IP Address:</strong> {channel.ipAddress}</div>
-        <div><strong>P2P IP:</strong> {channel.p2pIp}</div>
-        <div><strong>Bandwidth:</strong> {channel.bandwidthKbps} Kbps</div>
-        <div><strong>Region:</strong> {channel.region}</div>
-        <div><strong>Updated At:</strong> {new Date(channel.updatedAt).toLocaleString()}</div>
+      <h1 className="text-2xl font-bold mb-4">Channels</h1>
+
+      <table className="w-full border-collapse border text-sm">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border px-2 py-1">ID</th>
+            <th className="border px-2 py-1">Agency</th>
+            <th className="border px-2 py-1">Provider</th>
+            <th className="border px-2 py-1">Bandwidth</th>
+            <th className="border px-2 py-1">Region</th>
+            <th className="border px-2 py-1">IP Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          {channels.map(channel => (
+            <tr key={channel.id}>
+              <td className="border px-2 py-1">{channel.id}</td>
+              <td className="border px-2 py-1">{channel.agencyName}</td>
+              <td className="border px-2 py-1">{channel.provider}</td>
+              <td className="border px-2 py-1">{channel.bandwidthKbps} Kbps</td>
+              <td className="border px-2 py-1">{channel.region}</td>
+              <td className="border px-2 py-1">{channel.ipAddress}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="flex gap-4 mt-6">
+        <button
+          onClick={() =>
+            router.push(
+              `/channels?skip=${Math.max(0, currentSkip - currentTake)}&take=${currentTake}`
+            )
+          }
+          className="px-4 py-2 bg-gray-300 rounded"
+        >
+          Prev
+        </button>
+        <button
+          onClick={() =>
+            router.push(`/channels?skip=${currentSkip + currentTake}&take=${currentTake}`)
+          }
+          className="px-4 py-2 bg-gray-300 rounded"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
 }
 
+// SSR: получаем данные с бэка с учетом skip и take
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const id = context.params?.id;
-  const res = await fetch(`http://localhost:3001/channels/${id}`);
-  
-  if (res.status !== 200) {
-    return {
-      notFound: true,
-    };
-  }
+  const skip = context.query.skip || "0";
+  const take = context.query.take || "10";
 
-  const channel: Channel = await res.json();
+  const res = await fetch(`http://localhost:3001/channels?skip=${skip}&take=${take}`);
+  const channels: Channel[] = await res.json();
 
   return {
     props: {
-      channel,
+      channels,
     },
   };
 };
