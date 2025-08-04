@@ -1,13 +1,5 @@
 import React from "react";
-
-export type Channel = {
-  id: number;
-  agencyName: string;
-  provider: string;
-  bandwidthKbps: number;
-  ipAddress: string;
-  region?: string;
-};
+import type { Channel } from "../types/channel";
 
 interface Props {
   channels: Channel[];

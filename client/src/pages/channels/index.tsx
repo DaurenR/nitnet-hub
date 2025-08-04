@@ -1,6 +1,7 @@
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import SearchForm from "../../components/SearchForm";
+import ChannelTable from "../../components/ChannelTable";
 import type { Channel } from "../../types/channel";
 
 
@@ -14,19 +15,18 @@ export default function ChannelsPage({ channels }: Props) {
     provider = "",
     agency = "",
     region = "",
-    sort = "",
     order = "",
   } = router.query;
 
-  const [providerInput, setProviderInput] = useState(provider);
-  const [agencyInput, setAgencyInput] = useState(agency);
-  const [regionInput, setRegionInput] = useState(region);
-
-  const handleSearch = () => {
+  const handleSearch = (
+    provider: string,
+    agency: string,
+    region: string
+  ) => {
     const query: Record<string, string> = {};
-    if (providerInput) query.provider = providerInput.toString();
-    if (agencyInput) query.agency = agencyInput.toString();
-    if (regionInput) query.region = regionInput.toString();
+    if (provider) query.provider = provider;
+    if (agency) query.agency = agency;
+    if (region) query.region = region;
     router.push({ pathname: "/channels", query });
   };
 
@@ -44,66 +44,15 @@ export default function ChannelsPage({ channels }: Props) {
     });
   };
 
-  const handleDelete = async (id: number) => {
-    const confirmed = window.confirm("Удалить запись?");
-    if (!confirmed) return;
-
-    try {
-      const res = await fetch(`http://localhost:3001/channels/${id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        alert("Удалено!");
-        // Обнови список, можно вручную удалить из state или перезапросить
-      } else {
-        alert("Ошибка при удалении");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Сервер не отвечает");
-    }
-  };
-
   return (
     <div className="p-8">
       <h1 className="text-3xl mb-6 font-bold">Channels</h1>
-
-      <div className="mb-6 flex gap-4 items-end">
-        <div>
-          <label className="block text-sm font-semibold">Provider</label>
-          <input
-            type="text"
-            value={providerInput as string}
-            onChange={(e) => setProviderInput(e.target.value)}
-            className="border px-3 py-1 rounded"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold">Agency</label>
-          <input
-            type="text"
-            value={agencyInput as string}
-            onChange={(e) => setAgencyInput(e.target.value)}
-            className="border px-3 py-1 rounded"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold">Region</label>
-          <input
-            type="text"
-            value={regionInput as string}
-            onChange={(e) => setRegionInput(e.target.value)}
-            className="border px-3 py-1 rounded"
-          />
-        </div>
-        <button
-          onClick={handleSearch}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Search
-        </button>
-      </div>
+      <SearchForm
+        provider={provider as string}
+        agency={agency as string}
+        region={region as string}
+        onSearch={handleSearch}
+      />
 
       <div className="mb-4 flex gap-2">
         <button
@@ -119,38 +68,7 @@ export default function ChannelsPage({ channels }: Props) {
           Sort by Agency ({order === "asc" ? "↑" : "↓"})
         </button>
       </div>
-
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border p-2">ID</th>
-            <th className="border p-2">Agency</th>
-            <th className="border p-2">Provider</th>
-            <th className="border p-2">Bandwidth</th>
-            <th className="border p-2">IP Address</th>
-            <th className="border p-2">Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          {channels.map((c) => (
-            <tr key={c.id}>
-              <td className="border p-2">{c.id}</td>
-              <td className="border p-2">{c.agencyName}</td>
-              <td className="border p-2">{c.provider}</td>
-              <td className="border p-2">{c.bandwidthKbps} Kbps</td>
-              <td className="border p-2">{c.ipAddress}</td>
-              <td className="border p-2 text-center">
-                <button
-                  onClick={() => handleDelete(c.id)}
-                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
-                >
-                  Удалить
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ChannelTable channels={channels} />
     </div>
   );
 }
