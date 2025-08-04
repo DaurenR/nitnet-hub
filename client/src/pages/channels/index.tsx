@@ -1,14 +1,8 @@
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import type { Channel } from "../../types/channel";
 
-type Channel = {
-  id: number;
-  agencyName: string;
-  provider: string;
-  bandwidthKbps: number;
-  ipAddress: string;
-};
 
 type Props = {
   channels: Channel[];
@@ -48,6 +42,27 @@ export default function ChannelsPage({ channels }: Props) {
         order: nextOrder,
       },
     });
+  };
+
+  const handleDelete = async (id: number) => {
+    const confirmed = window.confirm("Удалить запись?");
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`http://localhost:3001/channels/${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        alert("Удалено!");
+        // Обнови список, можно вручную удалить из state или перезапросить
+      } else {
+        alert("Ошибка при удалении");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Сервер не отвечает");
+    }
   };
 
   return (
@@ -113,6 +128,7 @@ export default function ChannelsPage({ channels }: Props) {
             <th className="border p-2">Provider</th>
             <th className="border p-2">Bandwidth</th>
             <th className="border p-2">IP Address</th>
+            <th className="border p-2">Действия</th>
           </tr>
         </thead>
         <tbody>
@@ -123,6 +139,14 @@ export default function ChannelsPage({ channels }: Props) {
               <td className="border p-2">{c.provider}</td>
               <td className="border p-2">{c.bandwidthKbps} Kbps</td>
               <td className="border p-2">{c.ipAddress}</td>
+              <td className="border p-2 text-center">
+                <button
+                  onClick={() => handleDelete(c.id)}
+                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
+                >
+                  Удалить
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

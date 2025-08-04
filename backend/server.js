@@ -122,6 +122,20 @@ app.post("/channels", async (req, res) => {
   }
 });
 
+app.delete("/channels/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.channels.delete({
+      where: { id: BigInt(id) }, // потому что id — BigInt в базе
+    });
+    res.status(200).json({ message: "Channel deleted successfully" });
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
 app.listen(3001, () => {
   console.log("Server running on http://localhost:3001");
 });
