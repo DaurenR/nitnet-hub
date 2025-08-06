@@ -1,5 +1,6 @@
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
+import { useState } from "react";
 import SearchForm from "../../components/SearchForm";
 import ChannelTable from "../../components/ChannelTable";
 import type { Channel } from "../../types/channel";
@@ -10,28 +11,81 @@ type Props = {
 
 export default function ChannelsPage({ channels }: Props) {
   const router = useRouter();
-  const { provider = "", agency = "", region = "", order = "" } = router.query;
+  const {
+    provider = "",
+    agency = "",
+    region = "",
+    order = "",
+    sort = "",
+    skip = "0",
+    take = "10",
+  } = router.query;
 
-  const handleSearch = (provider: string, agency: string, region: string) => {
+  const skipNumber = parseInt(skip as string, 10) || 0;
+  const takeNumber = parseInt(take as string, 10) || 10;
+  const currentPage = Math.floor(skipNumber / takeNumber) + 1;
+
+  const [pageInput, setPageInput] = useState(currentPage.toString());
+  const [takeInput, setTakeInput] = useState(takeNumber.toString());
+
+  const handleSearch = (
+    providerInput: string,
+    agencyInput: string,
+    regionInput: string
+  ) => {
     const query: Record<string, string> = {};
-    if (provider) query.provider = provider;
-    if (agency) query.agency = agency;
-    if (region) query.region = region;
+    if (providerInput) query.provider = providerInput;
+    if (agencyInput) query.agency = agencyInput;
+    if (regionInput) query.region = regionInput;
+    if (sort) query.sort = sort as string;
+    if (order) query.order = order as string;
+    query.take = takeNumber.toString();
+    query.skip = "0";
     router.push({ pathname: "/channels", query });
+  };
+
+  const baseQuery = () => {
+    const query: Record<string, string> = {};
+    if (provider) query.provider = provider as string;
+    if (agency) query.agency = agency as string;
+    if (region) query.region = region as string;
+    if (sort) query.sort = sort as string;
+    if (order) query.order = order as string;
+    return query;
   };
 
   const handleSort = (field: string) => {
     const nextOrder = order === "asc" ? "desc" : "asc";
-    router.push({
-      pathname: "/channels",
-      query: {
-        provider,
-        agency,
-        region, // сохраняем текущие фильтры
-        sort: field,
-        order: nextOrder,
-      },
-    });
+    const query = baseQuery();
+    query.sort = field;
+    query.order = nextOrder;
+    query.skip = skipNumber.toString();
+    query.take = takeNumber.toString();
+    router.push({ pathname: "/channels", query });
+  };
+
+  const handleNext = () => {
+    const query = baseQuery();
+    query.skip = (skipNumber + takeNumber).toString();
+    query.take = takeNumber.toString();
+    router.push({ pathname: "/channels", query });
+  };
+
+  const handlePrev = () => {
+    const query = baseQuery();
+    const newSkip = Math.max(0, skipNumber - takeNumber);
+    query.skip = newSkip.toString();
+    query.take = takeNumber.toString();
+    router.push({ pathname: "/channels", query });
+  };
+
+  const handleApply = () => {
+    const page = parseInt(pageInput, 10) || 1;
+    const newTake = parseInt(takeInput, 10) || takeNumber;
+    const query = baseQuery();
+    query.take = newTake.toString();
+    query.skip = ((page - 1) * newTake).toString();
+    router.push({ pathname: "/channels", query });
   };
 
   return (
@@ -44,6 +98,33 @@ export default function ChannelsPage({ channels }: Props) {
         region={region as string}
         onSearch={handleSearch}
       />
+
+      <div className="mb-4 flex gap-4 items-end">
+        <div>
+          <label className="block text-sm font-semibold">Page</label>
+          <input
+            type="number"
+            value={pageInput}
+            onChange={(e) => setPageInput(e.target.value)}
+            className="border px-3 py-1 rounded w-20"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold">Per page</label>
+          <input
+            type="number"
+            value={takeInput}
+            onChange={(e) => setTakeInput(e.target.value)}
+            className="border px-3 py-1 rounded w-24"
+          />
+        </div>
+        <button
+          onClick={handleApply}
+          className="bg-gray-200 px-3 py-1 rounded"
+        >
+          Apply
+        </button>
+      </div>
 
       <div className="mb-4 flex gap-2">
         <button
@@ -61,12 +142,29 @@ export default function ChannelsPage({ channels }: Props) {
       </div>
 
       <ChannelTable channels={channels} />
+
+      <div className="mt-4 flex items-center gap-2">
+        <button
+          onClick={handlePrev}
+          disabled={skipNumber === 0}
+          className="bg-gray-200 px-3 py-1 rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span>Page {currentPage}</span>
+        <button
+          onClick={handleNext}
+          className="bg-gray-200 px-3 py-1 rounded"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { provider, agency, region, sort, order } = context.query;
+  const { provider, agency, region, sort, order, skip, take } = context.query;
 
   const searchParams = new URLSearchParams();
   if (provider) searchParams.append("provider", provider.toString());
@@ -74,6 +172,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   if (region) searchParams.append("region", region.toString());
   if (sort) searchParams.append("sort", sort.toString());
   if (order) searchParams.append("order", order.toString());
+  if (skip) searchParams.append("skip", skip.toString());
+  if (take) searchParams.append("take", take.toString());
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/channels?${searchParams.toString()}`

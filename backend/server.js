@@ -10,7 +10,7 @@ app.use(express.json());
 
 app.get("/channels", async (req, res) => {
   try {
-    const { provider, agency, region, sort, skip = 0, take = 10 } = req.query;
+    const { provider, agency, region, sort, order, skip = 0, take = 10 } = req.query;
 
     const filters = {};
     if (provider) filters.provider = provider;
@@ -19,7 +19,7 @@ app.get("/channels", async (req, res) => {
 
     const channels = await prisma.channels.findMany({
       where: filters,
-      orderBy: sort ? { [sort]: "asc" } : undefined,
+      orderBy: sort ? { [sort]: order === 'desc' ? 'desc' : 'asc' } : undefined,
       skip: Number(skip),
       take: Number(take),
     });
