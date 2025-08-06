@@ -16,7 +16,7 @@ export default function EditChannelPage({ channel }: Props) {
   };
 
   const handleSubmit = async () => {
-    await fetch(`http://localhost:3001/channels/${channel.id}`, {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${channel.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
