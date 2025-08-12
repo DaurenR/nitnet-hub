@@ -16,13 +16,13 @@ export default function EditChannelPage({ channel }: Props) {
   };
 
   const handleSubmit = async () => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${channel.id}`, {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/${channel.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
     });
 
-    router.push(`/channels/${channel.id}`);
+    router.push("/channels");
   };
 
   return (
@@ -84,7 +84,7 @@ export default function EditChannelPage({ channel }: Props) {
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const id = context.params?.id;
-  const res = await fetch(`http://localhost:3001/channels/${id}`);
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/channels/${id}`);
   
   if (res.status !== 200) {
     return { notFound: true };
