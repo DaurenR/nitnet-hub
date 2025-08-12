@@ -1,33 +1,38 @@
 import React from "react";
-import type { Channel } from "../types/channel";
 
-interface Props {
-  channels: Channel[];
-  showRegion?: boolean;
+interface Column<T extends Record<string, unknown>> {
+  key: string;
+  label: string;
 }
 
-export default function ChannelTable({ channels, showRegion = false }: Props) {
+interface Props<T extends Record<string, unknown>> {
+  data: T[];
+  columns: Column<T>[];
+}
+
+export default function ChannelTable<T extends Record<string, unknown>>({
+  data,
+  columns,
+}: Props<T>) {
   return (
     <table className="w-full border-collapse border border-gray-300">
       <thead>
         <tr className="bg-gray-100">
-          <th className="border p-2">ID</th>
-          <th className="border p-2">Agency</th>
-          <th className="border p-2">Provider</th>
-          <th className="border p-2">Bandwidth</th>
-          {showRegion && <th className="border p-2">Region</th>}
-          <th className="border p-2">IP Address</th>
+          {columns.map((col) => (
+            <th key={col.key} className="border p-2">
+              {col.label}
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody>
-        {channels.map((c) => (
-          <tr key={c.id}>
-            <td className="border p-2">{c.id}</td>
-            <td className="border p-2">{c.agencyName}</td>
-            <td className="border p-2">{c.provider}</td>
-            <td className="border p-2">{c.bandwidthKbps} Kbps</td>
-            {showRegion && <td className="border p-2">{c.region}</td>}
-            <td className="border p-2">{c.ipAddress}</td>
+        {data.map((row, idx) => (
+          <tr key={(row.id as React.Key) ?? idx}>
+            {columns.map((col) => (
+              <td key={col.key} className="border p-2">
+                {String((row as Record<string, unknown>)[col.key] ?? "")}
+              </td>
+            ))}
           </tr>
         ))}
       </tbody>

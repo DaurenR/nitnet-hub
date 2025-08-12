@@ -13,7 +13,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model channels {
+model MciriapChannel {
   id               BigInt   @id
   network          String
   agencyName       String
@@ -29,4 +29,15 @@ model channels {
   manager          String
   updatedAt        DateTime @default(now())
   updatedBy        String
+
+  @@map("channels")
+}
+
+model MioChannel {
+  id          BigInt   @id
+  provider    String
+  serviceName String
+  ipAddress   String
+  updatedAt   DateTime @default(now())
+  updatedBy   String
 }

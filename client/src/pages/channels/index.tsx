@@ -28,11 +28,8 @@ export default function ChannelsPage({ channels }: Props) {
   const [pageInput, setPageInput] = useState(currentPage.toString());
   const [takeInput, setTakeInput] = useState(takeNumber.toString());
 
-  const handleSearch = (
-    providerInput: string,
-    agencyInput: string,
-    regionInput: string
-  ) => {
+  const handleSearch = (values: Record<string, string>) => {
+    const { provider: providerInput, agency: agencyInput, region: regionInput } = values;
     const query: Record<string, string> = {};
     if (providerInput) query.provider = providerInput;
     if (agencyInput) query.agency = agencyInput;
@@ -93,9 +90,11 @@ export default function ChannelsPage({ channels }: Props) {
       <h1 className="text-3xl mb-6 font-bold">Channels</h1>
 
       <SearchForm
-        provider={provider as string}
-        agency={agency as string}
-        region={region as string}
+        fields={[
+          { name: "provider", label: "Provider", defaultValue: provider as string },
+          { name: "agency", label: "Agency", defaultValue: agency as string },
+          { name: "region", label: "Region", defaultValue: region as string },
+        ]}
         onSearch={handleSearch}
       />
 
@@ -141,7 +140,17 @@ export default function ChannelsPage({ channels }: Props) {
         </button>
       </div>
 
-      <ChannelTable channels={channels} />
+      <ChannelTable
+        data={channels}
+        columns={[
+          { key: "id", label: "ID" },
+          { key: "agencyName", label: "Agency" },
+          { key: "provider", label: "Provider" },
+          { key: "bandwidthKbps", label: "Bandwidth" },
+          { key: "region", label: "Region" },
+          { key: "ipAddress", label: "IP Address" },
+        ]}
+      />
 
       <div className="mt-4 flex items-center gap-2">
         <button

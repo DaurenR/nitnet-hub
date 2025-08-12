@@ -1,4 +1,4 @@
-export interface Channel {
+export interface Channel extends Record<string, unknown> {
   id: number;
   network: string;
   agencyName: string;

@@ -1,53 +1,40 @@
 import React, { useState } from "react";
 
-interface Props {
-  provider?: string;
-  agency?: string;
-  region?: string;
-  onSearch: (provider: string, agency: string, region: string) => void;
+interface Field {
+  name: string;
+  label: string;
+  defaultValue?: string;
 }
 
-export default function SearchForm({
-  provider = "",
-  agency = "",
-  region = "",
-  onSearch,
-}: Props) {
-  const [providerInput, setProviderInput] = useState(provider);
-  const [agencyInput, setAgencyInput] = useState(agency);
-  const [regionInput, setRegionInput] = useState(region);
+interface Props {
+  fields: Field[];
+  onSearch: (values: Record<string, string>) => void;
+}
+
+export default function SearchForm({ fields, onSearch }: Props) {
+  const [values, setValues] = useState<Record<string, string>>(
+    () => Object.fromEntries(fields.map((f) => [f.name, f.defaultValue || ""]))
+  );
+
+  const handleChange = (name: string, value: string) => {
+    setValues((prev) => ({ ...prev, [name]: value }));
+  };
 
   return (
     <div className="mb-6 flex gap-4 items-end">
-      <div>
-        <label className="block text-sm font-semibold">Provider</label>
-        <input
-          type="text"
-          value={providerInput}
-          onChange={(e) => setProviderInput(e.target.value)}
-          className="border px-3 py-1 rounded"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold">Agency</label>
-        <input
-          type="text"
-          value={agencyInput}
-          onChange={(e) => setAgencyInput(e.target.value)}
-          className="border px-3 py-1 rounded"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold">Region</label>
-        <input
-          type="text"
-          value={regionInput}
-          onChange={(e) => setRegionInput(e.target.value)}
-          className="border px-3 py-1 rounded"
-        />
-      </div>
+      {fields.map((field) => (
+        <div key={field.name}>
+          <label className="block text-sm font-semibold">{field.label}</label>
+          <input
+            type="text"
+            value={values[field.name]}
+            onChange={(e) => handleChange(field.name, e.target.value)}
+            className="border px-3 py-1 rounded"
+          />
+        </div>
+      ))}
       <button
-        onClick={() => onSearch(providerInput, agencyInput, regionInput)}
+        onClick={() => onSearch(values)}
         className="bg-blue-600 text-white px-4 py-2 rounded"
       >
         Search

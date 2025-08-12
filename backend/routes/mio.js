@@ -1,0 +1,115 @@
+const express = require("express");
+const { PrismaClient } = require("@prisma/client");
+
+const router = express.Router();
+const prisma = new PrismaClient();
+
+router.get("/", async (req, res) => {
+  try {
+    const { provider, serviceName, sort, order, skip = 0, take = 10 } = req.query;
+
+    const filters = {};
+    if (provider) filters.provider = provider;
+    if (serviceName) filters.serviceName = serviceName;
+
+    const channels = await prisma.mioChannel.findMany({
+      where: filters,
+      orderBy: sort ? { [sort]: order === 'desc' ? 'desc' : 'asc' } : undefined,
+      skip: Number(skip),
+      take: Number(take),
+    });
+
+    const fixed = channels.map((channel) => ({
+      ...channel,
+      id: Number(channel.id),
+    }));
+
+    res.json(fixed);
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const channel = await prisma.mioChannel.findUnique({
+      where: { id },
+    });
+
+    if (!channel) {
+      return res.status(404).json({ error: "Channel not found" });
+    }
+
+    res.json({
+      ...channel,
+      id: Number(channel.id),
+    });
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.put("/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const data = req.body;
+
+    const updatedChannel = await prisma.mioChannel.update({
+      where: { id },
+      data: {
+        provider: data.provider,
+        serviceName: data.serviceName,
+        ipAddress: data.ipAddress,
+        updatedBy: data.updatedBy,
+        updatedAt: new Date(),
+      },
+    });
+
+    res.json({
+      ...updatedChannel,
+      id: Number(updatedChannel.id),
+    });
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.post("/", async (req, res) => {
+  try {
+    const newChannel = await prisma.mioChannel.create({
+      data: {
+        id: req.body.id,
+        provider: req.body.provider,
+        serviceName: req.body.serviceName,
+        ipAddress: req.body.ipAddress,
+        updatedBy: req.body.updatedBy,
+      },
+    });
+    res.json({
+      ...newChannel,
+      id: Number(newChannel.id),
+    });
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.mioChannel.delete({
+      where: { id: BigInt(id) },
+    });
+    res.status(200).json({ message: "Channel deleted successfully" });
+  } catch (err) {
+    console.error("ERROR:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+module.exports = router;
