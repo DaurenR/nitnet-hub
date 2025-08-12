@@ -13,7 +13,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model MciriapChannel {
+model McriapChannel {
   id               BigInt   @id
   network          String
   agencyName       String

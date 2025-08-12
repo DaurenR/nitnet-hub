@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const mciriapRoutes = require("./routes/mcriap");
+const mcriapRoutes = require("./routes/mcriap");
 const mioRoutes = require("./routes/mio");
 
 const app = express();
@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/mciriap", mciriapRoutes);
+app.use("/mcriap", mcriapRoutes);
 app.use("/mio", mioRoutes);
 
 

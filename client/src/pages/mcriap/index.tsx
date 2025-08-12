@@ -1,7 +1,7 @@
 import { GetServerSideProps } from "next";
 import ChannelTable from "../../components/ChannelTable";
 
-interface MciriapChannel extends Record<string, unknown> {
+interface McriapChannel extends Record<string, unknown> {
   id: number;
   agencyName: string;
   provider: string;
@@ -11,10 +11,10 @@ interface MciriapChannel extends Record<string, unknown> {
 }
 
 type Props = {
-  channels: MciriapChannel[];
+  channels: McriapChannel[];
 };
 
-export default function MciriapPage({ channels }: Props) {
+export default function McriapPage({ channels }: Props) {
   return (
     <div className="p-8">
       <h1 className="text-3xl mb-6 font-bold">MCIRIAP Channels</h1>
@@ -34,8 +34,8 @@ export default function MciriapPage({ channels }: Props) {
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async () => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mciriap`);
-  const channels: MciriapChannel[] = await res.json();
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap`);
+  const channels: McriapChannel[] = await res.json();
   return {
     props: {
       channels,

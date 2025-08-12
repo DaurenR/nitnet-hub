@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
     if (agency) filters.agencyName = agency;
     if (region) filters.region = region;
 
-    const channels = await prisma.mciriapChannel.findMany({
+    const channels = await prisma.mcriapChannel.findMany({
       where: filters,
       orderBy: sort ? { [sort]: order === 'desc' ? 'desc' : 'asc' } : undefined,
       skip: Number(skip),
@@ -35,7 +35,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const channel = await prisma.mciriapChannel.findUnique({
+    const channel = await prisma.mcriapChannel.findUnique({
       where: { id },
     });
 
@@ -58,7 +58,7 @@ router.put("/:id", async (req, res) => {
     const id = Number(req.params.id);
     const data = req.body;
 
-    const updatedChannel = await prisma.mciriapChannel.update({
+    const updatedChannel = await prisma.mcriapChannel.update({
       where: { id },
       data: {
         network: data.network,
@@ -90,7 +90,7 @@ router.put("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const newChannel = await prisma.mciriapChannel.create({
+    const newChannel = await prisma.mcriapChannel.create({
       data: {
         id: req.body.id,
         network: req.body.network,
@@ -121,7 +121,7 @@ router.post("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.mciriapChannel.delete({
+    await prisma.mcriapChannel.delete({
       where: { id: BigInt(id) },
     });
     res.status(200).json({ message: "Channel deleted successfully" });
