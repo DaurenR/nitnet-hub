@@ -1,7 +1,7 @@
 import React from "react";
 
 interface Column<T extends Record<string, unknown>> {
-  key: string;
+  key: keyof T;
   label: string;
 }
 
@@ -19,7 +19,7 @@ export default function ChannelTable<T extends Record<string, unknown>>({
       <thead>
         <tr className="bg-gray-100">
           {columns.map((col) => (
-            <th key={col.key} className="border p-2">
+            <th key={String(col.key)} className="border p-2">
               {col.label}
             </th>
           ))}
@@ -29,8 +29,10 @@ export default function ChannelTable<T extends Record<string, unknown>>({
         {data.map((row, idx) => (
           <tr key={(row.id as React.Key) ?? idx}>
             {columns.map((col) => (
-              <td key={col.key} className="border p-2">
-                {String((row as Record<string, unknown>)[col.key] ?? "")}
+              <td key={String(col.key)} className="border p-2">
+                {String(
+                  (row as Record<string, unknown>)[col.key as string] ?? ""
+                )}
               </td>
             ))}
           </tr>

@@ -12,6 +12,7 @@ interface McriapChannel extends Record<string, unknown> {
 
 type Props = {
   channels: McriapChannel[];
+  total: number;
 };
 
 export default function McriapPage({ channels }: Props) {
@@ -35,10 +36,12 @@ export default function McriapPage({ channels }: Props) {
 
 export const getServerSideProps: GetServerSideProps<Props> = async () => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap`);
-  const channels: McriapChannel[] = await res.json();
+  const { items, total }: { items: McriapChannel[]; total: number } =
+    await res.json();
   return {
     props: {
-      channels,
+      channels: items,
+      total,
     },
   };
 };

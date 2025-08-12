@@ -20,12 +20,14 @@ router.get("/", async (req, res) => {
       take: Number(take),
     });
 
+    const total = await prisma.mcriapChannel.count({ where: filters });
+
     const fixed = channels.map((channel) => ({
       ...channel,
       id: Number(channel.id),
     }));
 
-    res.json(fixed);
+    res.json({ items: fixed, total });
   } catch (err) {
     console.error("ERROR:", err);
     res.status(500).json({ error: "Internal Server Error" });
