@@ -3,31 +3,30 @@ import ChannelTable from "../../components/ChannelTable";
 
 interface MioChannel extends Record<string, unknown> {
   id: number;
-  agencyName: string;
   provider: string;
-  bandwidthKbps: number;
-  region: string;
+  serviceName: string;
   ipAddress: string;
+  updatedAt: string;
+  updatedBy: string;
 }
 
 type Props = {
-  channels: MioChannel[];
+  items: MioChannel[];
   total: number;
 };
 
-export default function MioPage({ channels }: Props) {
+export default function MioPage({ items }: Props) {
   return (
     <div className="p-8">
       <h1 className="text-3xl mb-6 font-bold">MIO Channels</h1>
       <ChannelTable
-        data={channels}
+        data={items}
         columns={[
-          { key: "id", label: "ID" },
-          { key: "agencyName", label: "Agency" },
           { key: "provider", label: "Provider" },
-          { key: "bandwidthKbps", label: "Bandwidth" },
-          { key: "region", label: "Region" },
+          { key: "serviceName", label: "Service Name" },
           { key: "ipAddress", label: "IP Address" },
+          { key: "updatedAt", label: "Updated At" },
+          { key: "updatedBy", label: "Updated By" },
         ]}
       />
     </div>
@@ -40,7 +39,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async () => {
     await res.json();
   return {
     props: {
-      channels: items,
+      items,
       total,
     },
   };
