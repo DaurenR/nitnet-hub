@@ -6,12 +6,12 @@ interface Column<T extends Record<string, unknown>> {
 }
 
 interface Props<T extends Record<string, unknown>> {
-  data: T[];
+  data?: T[];
   columns: Column<T>[];
 }
 
 export default function ChannelTable<T extends Record<string, unknown>>({
-  data,
+  data = [],
   columns,
 }: Props<T>) {
   return (
@@ -26,17 +26,23 @@ export default function ChannelTable<T extends Record<string, unknown>>({
         </tr>
       </thead>
       <tbody>
-        {data.map((row, idx) => (
-          <tr key={(row.id as React.Key) ?? idx}>
-            {columns.map((col) => (
-              <td key={String(col.key)} className="border p-2">
-                {String(
-                  (row as Record<string, unknown>)[col.key as string] ?? ""
-                )}
-              </td>
-            ))}
+        {data.length === 0 ? (
+          <tr>
+            <td colSpan={columns.length}>No data</td>
           </tr>
-        ))}
+         ) : (
+          data.map((row, idx) => (
+            <tr key={(row.id as React.Key) ?? idx}>
+              {columns.map((col) => (
+                <td key={String(col.key)} className="border p-2">
+                  {String(
+                    (row as Record<string, unknown>)[col.key as string] ?? ""
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))
+        )}
       </tbody>
     </table>
   );
