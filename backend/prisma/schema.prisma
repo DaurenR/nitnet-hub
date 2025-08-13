@@ -14,27 +14,27 @@ datasource db {
 }
 
 model McriapChannel {
-  id               BigInt   @id
-  network          String
-  agencyName       String
-  physicalAddress  String
-  serviceName      String
-  bandwidthKbps    Int
-  tariffPlan       String
-  connectionType   String
-  provider         String
-  region           String
-  ipAddress        String
-  p2pIp            String
-  manager          String
-  updatedAt        DateTime @default(now())
-  updatedBy        String
+  id              BigInt   @id @default(autoincrement())
+  network         String
+  agencyName      String
+  physicalAddress String
+  serviceName     String
+  bandwidthKbps   Int
+  tariffPlan      String
+  connectionType  String
+  provider        String
+  region          String
+  ipAddress       String
+  p2pIp           String
+  manager         String
+  updatedAt       DateTime @default(now())
+  updatedBy       String
 
   @@map("channels")
 }
 
 model MioChannel {
-  id          BigInt   @id
+  id          BigInt   @id @default(autoincrement())
   provider    String
   serviceName String
   ipAddress   String

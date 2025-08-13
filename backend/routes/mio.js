@@ -84,7 +84,6 @@ router.post("/", async (req, res) => {
   try {
     const newChannel = await prisma.mioChannel.create({
       data: {
-        id: req.body.id,
         provider: req.body.provider,
         serviceName: req.body.serviceName,
         ipAddress: req.body.ipAddress,
@@ -103,9 +102,9 @@ router.post("/", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
     await prisma.mioChannel.delete({
-      where: { id: BigInt(id) },
+      where: { id },
     });
     res.status(200).json({ message: "Channel deleted successfully" });
   } catch (err) {

@@ -94,7 +94,6 @@ router.post("/", async (req, res) => {
   try {
     const newChannel = await prisma.mcriapChannel.create({
       data: {
-        id: req.body.id,
         network: req.body.network,
         agencyName: req.body.agencyName,
         physicalAddress: req.body.physicalAddress,
@@ -122,9 +121,9 @@ router.post("/", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
     await prisma.mcriapChannel.delete({
-      where: { id: BigInt(id) },
+      where: { id },
     });
     res.status(200).json({ message: "Channel deleted successfully" });
   } catch (err) {
