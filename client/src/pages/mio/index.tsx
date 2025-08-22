@@ -35,7 +35,7 @@ export default function MioPage() {
   const {
     data: channels,
     total,
-    loading,
+    isLoading,
     error,
   } = usePagedList<MioChannel>("mio", {
     page,
@@ -93,7 +93,7 @@ export default function MioPage() {
         fields={[{ name: "q", label: "Search", defaultValue: q || "" }]}
         onSearch={handleSearch}
       />
-       {loading ? (
+       {isLoading ? (
         <Loader />
       ) : error ? (
         <ErrorState />

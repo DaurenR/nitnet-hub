@@ -36,7 +36,7 @@ export default function McriapPage() {
    const {
     data: channels,
     total,
-    loading,
+    isLoading,
     error,
   } = usePagedList<McriapChannel>("mcriap", {
     page,
@@ -94,7 +94,7 @@ export default function McriapPage() {
         fields={[{ name: "q", label: "Search", defaultValue: q || "" }]}
         onSearch={handleSearch}
       />
-      {loading ? (
+      {isLoading ? (
         <Loader />
       ) : error ? (
         <ErrorState />

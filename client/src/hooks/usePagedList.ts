@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-interface Params {
+export interface PagedListParams {
   page?: number;
   perPage?: number;
   sort?: string;
@@ -8,23 +8,21 @@ interface Params {
   q?: string;
 }
 
-interface Result<T> {
+export interface PagedListResult<T> {
   data: T[];
   total: number;
-  loading: boolean;
-  error: boolean
-  page: number;
-  perPage: number;
+  isLoading: boolean;
+  error: Error | null;
 }
 
 export default function usePagedList<T>(
   endpoint: string,
-  { page = 1, perPage = 10, sort, order, q }: Params
-): Result<T> {
+  { page = 1, perPage = 10, sort, order, q }: PagedListParams = {}
+): PagedListResult<T> {
   const [data, setData] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams({
@@ -35,33 +33,38 @@ export default function usePagedList<T>(
     if (order) params.append("order", order);
     if (q) params.append("q", q);
 
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/${endpoint}?${params.toString()}`;
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    fetch(url)
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((json) => {
-        if (cancelled) return;
-        setData(json.data || []);
-        setTotal(json.total || 0);
-        setError(false);
+    const controller = new AbortController();
+    const url = `${
+      process.env.NEXT_PUBLIC_API_URL
+    }/${endpoint}?${params.toString()}`;
+    setIsLoading(true);
+    setError(null);
+
+    fetch(url, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Request failed with status ${res.status}`);
+        }
+        return res.json();
       })
-      .catch(() => {
-        if (cancelled) return;
+      .then((json) => {
+        setData(Array.isArray(json.data) ? json.data : []);
+        setTotal(typeof json.total === "number" ? json.total : 0);
+      })
+      .catch((err) => {
+        if (err.name === "AbortError") return;
         setData([]);
         setTotal(0);
-        setError(true);
+        setError(err instanceof Error ? err : new Error(String(err)));
       })
       .finally(() => {
-        if (cancelled) return;
-        setLoading(false);
+        setIsLoading(false);
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [endpoint, page, perPage, sort, order, q]);
 
-  return { data, total, loading, error, page, perPage };
+  return { data, total, isLoading, error };
 }
