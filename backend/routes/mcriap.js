@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 router.get("/", async (req, res) => {
   try {
     const { provider, agency, region, sort, order } = req.query;
+    const q = req.query.q?.toString();
     const page = Number(req.query.page) || 1;
     const perPage = Number(req.query.perPage) || 10;
     const skip = (page - 1) * perPage;
@@ -15,6 +16,12 @@ router.get("/", async (req, res) => {
     if (provider) filters.provider = provider;
     if (agency) filters.agencyName = agency;
     if (region) filters.region = region;
+     if (q)
+      filters.OR = [
+        { agencyName: { contains: q, mode: "insensitive" } },
+        { provider: { contains: q, mode: "insensitive" } },
+        { region: { contains: q, mode: "insensitive" } },
+      ];
 
     const channels = await prisma.mcriapChannel.findMany({
       where: filters,

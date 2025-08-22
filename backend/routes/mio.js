@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 router.get("/", async (req, res) => {
   try {
     const { provider, serviceName, sort, order } = req.query;
+    const q = req.query.q?.toString();
     const page = Number(req.query.page) || 1;
     const perPage = Number(req.query.perPage) || 10;
     const skip = (page - 1) * perPage;
@@ -14,6 +15,11 @@ router.get("/", async (req, res) => {
     const filters = {};
     if (provider) filters.provider = provider;
     if (serviceName) filters.serviceName = serviceName;
+    if (q)
+      filters.OR = [
+        { provider: { contains: q, mode: "insensitive" } },
+        { serviceName: { contains: q, mode: "insensitive" } },
+      ];
 
     const channels = await prisma.mioChannel.findMany({
       where: filters,
