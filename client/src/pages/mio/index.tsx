@@ -13,6 +13,8 @@ interface MioChannel extends Record<string, unknown> {
 type Props = {
   channels: MioChannel[];
   total: number;
+  page: number;
+  perPage: number;
 };
 
 export default function MioPage({ channels }: Props) {
@@ -41,16 +43,24 @@ export const getServerSideProps: GetServerSideProps<Props> = async () => {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio`);
     if (!res.ok) {
-      return { props: { channels: [], total: 0 } };
+      return { props: { channels: [], total: 0, page: 1, perPage: 10 } };
     }
-    const { items, total }: { items: MioChannel[]; total: number } = await res.json();
+    const {
+      data,
+      total,
+      page,
+      perPage,
+    }: { data: MioChannel[]; total: number; page: number; perPage: number } =
+      await res.json();
     return {
       props: {
-        channels: items,
+        channels: data,
         total,
+        page,
+        perPage,
       },
     };
   } catch {
-    return { props: { channels: [], total: 0 } };
+    return { props: { channels: [], total: 0, page: 1, perPage: 10 } };
   }
 };

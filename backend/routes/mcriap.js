@@ -6,7 +6,10 @@ const prisma = new PrismaClient();
 
 router.get("/", async (req, res) => {
   try {
-    const { provider, agency, region, sort, order, skip = 0, take = 10 } = req.query;
+    const { provider, agency, region, sort, order } = req.query;
+    const page = Number(req.query.page) || 1;
+    const perPage = Number(req.query.perPage) || 10;
+    const skip = (page - 1) * perPage;
 
     const filters = {};
     if (provider) filters.provider = provider;
@@ -16,8 +19,8 @@ router.get("/", async (req, res) => {
     const channels = await prisma.mcriapChannel.findMany({
       where: filters,
       orderBy: sort ? { [sort]: order === 'desc' ? 'desc' : 'asc' } : undefined,
-      skip: Number(skip),
-      take: Number(take),
+      skip,
+      take: perPage,
     });
 
     const total = await prisma.mcriapChannel.count({ where: filters });
@@ -27,7 +30,7 @@ router.get("/", async (req, res) => {
       id: Number(channel.id),
     }));
 
-    res.json({ items: fixed, total });
+    res.json({ data: fixed, total, page, perPage });
   } catch (err) {
     console.error("ERROR:", err);
     res.status(500).json({ error: "Internal Server Error" });
