@@ -8,21 +8,35 @@ interface Column<T extends Record<string, unknown>> {
 interface Props<T extends Record<string, unknown>> {
   data?: T[];
   columns: Column<T>[];
+  sort?: string;
+  order?: "asc" | "desc";
+  onSort?: (field: string) => void;
 }
 
 export default function ChannelTable<T extends Record<string, unknown>>({
   data = [],
   columns,
+  sort,
+  order,
+  onSort,
 }: Props<T>) {
   return (
     <table className="w-full border-collapse border border-gray-300">
       <thead>
         <tr className="bg-gray-100">
-          {columns.map((col) => (
-            <th key={String(col.key)} className="border p-2">
-              {col.label}
-            </th>
-          ))}
+           {columns.map((col) => {
+            const key = String(col.key);
+            return (
+              <th
+                key={key}
+                className="border p-2 cursor-pointer select-none"
+                onClick={() => onSort?.(key)}
+              >
+                {col.label}
+                {sort === key && (order === "asc" ? " ▲" : " ▼")}
+              </th>
+            );
+          })}
         </tr>
       </thead>
       <tbody>

@@ -1,5 +1,8 @@
-import { GetServerSideProps } from "next";
+import { useRouter } from "next/router";
 import ChannelTable from "../../components/ChannelTable";
+import SearchForm from "../../components/SearchForm";
+import Pagination from "../../components/Pagination";
+import usePagedList from "../../hooks/usePagedList";
 
 interface MioChannel extends Record<string, unknown> {
   id: number;
@@ -10,57 +13,86 @@ interface MioChannel extends Record<string, unknown> {
   updatedBy: string;
 }
 
-type Props = {
-  channels: MioChannel[];
-  total: number;
-  page: number;
-  perPage: number;
-};
+export default function MioPage() {
+  const router = useRouter();
 
-export default function MioPage({ channels }: Props) {
+  const getNumber = (v: string | string[] | undefined, def: number) => {
+    const n = parseInt(Array.isArray(v) ? v[0] : v || "", 10);
+    return isNaN(n) ? def : n;
+  };
+  const getString = (v: string | string[] | undefined) =>
+    Array.isArray(v) ? v[0] : v;
+
+  const page = getNumber(router.query.page, 1);
+  const perPage = getNumber(router.query.perPage, 10);
+  const sort = getString(router.query.sort);
+  const order = getString(router.query.order);
+  const q = getString(router.query.q);
+
+  const { data: channels, total } = usePagedList<MioChannel>("mio", {
+    page,
+    perPage,
+    sort,
+    order,
+    q,
+  });
+
+  const handlePageChange = (p: number) => {
+    router.push(
+      { pathname: router.pathname, query: { ...router.query, page: p } },
+      undefined,
+      { shallow: true }
+    );
+  };
+
+  const handleSearch = (values: Record<string, string>) => {
+    router.push(
+      {
+        pathname: router.pathname,
+        query: { ...router.query, page: 1, q: values.q },
+      },
+      undefined,
+      { shallow: true }
+    );
+  };
+
+  const handleSort = (field: string) => {
+    const nextOrder = sort === field && order === "asc" ? "desc" : "asc";
+    router.push(
+      {
+        pathname: router.pathname,
+        query: { ...router.query, page: 1, sort: field, order: nextOrder },
+      },
+      undefined,
+      { shallow: true }
+    );
+  };
   return (
     <div className="p-8">
       <h1 className="text-3xl mb-6 font-bold">MIO Channels</h1>
-      {channels.length === 0 ? (
-        <p>No data</p>
-      ) : (
-        <ChannelTable
-          data={channels}
-          columns={[
-            { key: "provider", label: "Provider" },
-            { key: "serviceName", label: "Service Name" },
-            { key: "ipAddress", label: "IP Address" },
-            { key: "updatedAt", label: "Updated At" },
-            { key: "updatedBy", label: "Updated By" },
-          ]}
-        />
-      )}
+      <SearchForm
+        fields={[{ name: "q", label: "Search", defaultValue: q || "" }]}
+        onSearch={handleSearch}
+      />
+      <ChannelTable
+        data={channels}
+        columns={[
+          { key: "provider", label: "Provider" },
+          { key: "serviceName", label: "Service Name" },
+          { key: "ipAddress", label: "IP Address" },
+          { key: "updatedAt", label: "Updated At" },
+          { key: "updatedBy", label: "Updated By" },
+        ]}
+        sort={sort}
+        order={order as "asc" | "desc" | undefined}
+        onSort={handleSort}
+      />
+      <Pagination
+        page={page}
+        perPage={perPage}
+        total={total}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }
-
-export const getServerSideProps: GetServerSideProps<Props> = async () => {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio`);
-    if (!res.ok) {
-      return { props: { channels: [], total: 0, page: 1, perPage: 10 } };
-    }
-    const {
-      data,
-      total,
-      page,
-      perPage,
-    }: { data: MioChannel[]; total: number; page: number; perPage: number } =
-      await res.json();
-    return {
-      props: {
-        channels: data,
-        total,
-        page,
-        perPage,
-      },
-    };
-  } catch {
-    return { props: { channels: [], total: 0, page: 1, perPage: 10 } };
-  }
-};
