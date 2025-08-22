@@ -2,6 +2,9 @@ import { useRouter } from "next/router";
 import ChannelTable from "../../components/ChannelTable";
 import SearchForm from "../../components/SearchForm";
 import Pagination from "../../components/Pagination";
+import EmptyState from "../../components/EmptyState";
+import ErrorState from "../../components/ErrorState";
+import Loader from "../../components/Loader";
 import usePagedList from "../../hooks/usePagedList";
 
 interface McriapChannel extends Record<string, unknown> {
@@ -30,7 +33,12 @@ export default function McriapPage() {
   const order = getString(router.query.order);
   const q = getString(router.query.q);
 
-  const { data: channels, total } = usePagedList<McriapChannel>("mcriap", {
+   const {
+    data: channels,
+    total,
+    loading,
+    error,
+  } = usePagedList<McriapChannel>("mcriap", {
     page,
     perPage,
     sort,
@@ -41,6 +49,17 @@ export default function McriapPage() {
   const handlePageChange = (p: number) => {
     router.push(
       { pathname: router.pathname, query: { ...router.query, page: p } },
+      undefined,
+      { shallow: true }
+    );
+  };
+
+  const handlePerPageChange = (pp: number) => {
+    router.push(
+      {
+        pathname: router.pathname,
+        query: { ...router.query, page: 1, perPage: pp },
+      },
       undefined,
       { shallow: true }
     );
@@ -75,26 +94,37 @@ export default function McriapPage() {
         fields={[{ name: "q", label: "Search", defaultValue: q || "" }]}
         onSearch={handleSearch}
       />
-      <ChannelTable
-        data={channels}
-        columns={[
-          { key: "id", label: "ID" },
-          { key: "agencyName", label: "Agency" },
-          { key: "provider", label: "Provider" },
-          { key: "bandwidthKbps", label: "Bandwidth" },
-          { key: "region", label: "Region" },
-          { key: "ipAddress", label: "IP Address" },
-        ]}
-        sort={sort}
-        order={order as "asc" | "desc" | undefined}
-        onSort={handleSort}
-      />
-      <Pagination
-        page={page}
-        perPage={perPage}
-        total={total}
-        onPageChange={handlePageChange}
-      />
+      {loading ? (
+        <Loader />
+      ) : error ? (
+        <ErrorState />
+      ) : channels.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <>
+          <ChannelTable
+            data={channels}
+            columns={[
+              { key: "id", label: "ID" },
+              { key: "agencyName", label: "Agency" },
+              { key: "provider", label: "Provider" },
+              { key: "bandwidthKbps", label: "Bandwidth" },
+              { key: "region", label: "Region" },
+              { key: "ipAddress", label: "IP Address" },
+            ]}
+            sort={sort}
+            order={order as "asc" | "desc" | undefined}
+            onSort={handleSort}
+          />
+          <Pagination
+            page={page}
+            perPage={perPage}
+            total={total}
+            onPageChange={handlePageChange}
+            onPerPageChange={handlePerPageChange}
+          />
+        </>
+      )}
     </div>
   );
 }

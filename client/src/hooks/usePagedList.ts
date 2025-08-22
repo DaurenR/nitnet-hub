@@ -12,6 +12,7 @@ interface Result<T> {
   data: T[];
   total: number;
   loading: boolean;
+  error: boolean
   page: number;
   perPage: number;
 }
@@ -23,6 +24,7 @@ export default function usePagedList<T>(
   const [data, setData] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams({
@@ -36,17 +38,20 @@ export default function usePagedList<T>(
     const url = `${process.env.NEXT_PUBLIC_API_URL}/${endpoint}?${params.toString()}`;
     let cancelled = false;
     setLoading(true);
+    setError(false);
     fetch(url)
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((json) => {
         if (cancelled) return;
         setData(json.data || []);
         setTotal(json.total || 0);
+        setError(false);
       })
       .catch(() => {
         if (cancelled) return;
         setData([]);
         setTotal(0);
+        setError(true);
       })
       .finally(() => {
         if (cancelled) return;
@@ -58,5 +63,5 @@ export default function usePagedList<T>(
     };
   }, [endpoint, page, perPage, sort, order, q]);
 
-  return { data, total, loading, page, perPage };
+  return { data, total, loading, error, page, perPage };
 }

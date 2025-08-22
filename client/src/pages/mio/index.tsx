@@ -2,6 +2,9 @@ import { useRouter } from "next/router";
 import ChannelTable from "../../components/ChannelTable";
 import SearchForm from "../../components/SearchForm";
 import Pagination from "../../components/Pagination";
+import EmptyState from "../../components/EmptyState";
+import ErrorState from "../../components/ErrorState";
+import Loader from "../../components/Loader";
 import usePagedList from "../../hooks/usePagedList";
 
 interface MioChannel extends Record<string, unknown> {
@@ -29,7 +32,12 @@ export default function MioPage() {
   const order = getString(router.query.order);
   const q = getString(router.query.q);
 
-  const { data: channels, total } = usePagedList<MioChannel>("mio", {
+  const {
+    data: channels,
+    total,
+    loading,
+    error,
+  } = usePagedList<MioChannel>("mio", {
     page,
     perPage,
     sort,
@@ -40,6 +48,17 @@ export default function MioPage() {
   const handlePageChange = (p: number) => {
     router.push(
       { pathname: router.pathname, query: { ...router.query, page: p } },
+      undefined,
+      { shallow: true }
+    );
+  };
+
+  const handlePerPageChange = (pp: number) => {
+    router.push(
+      {
+        pathname: router.pathname,
+        query: { ...router.query, page: 1, perPage: pp },
+      },
       undefined,
       { shallow: true }
     );
@@ -74,25 +93,36 @@ export default function MioPage() {
         fields={[{ name: "q", label: "Search", defaultValue: q || "" }]}
         onSearch={handleSearch}
       />
-      <ChannelTable
-        data={channels}
-        columns={[
-          { key: "provider", label: "Provider" },
-          { key: "serviceName", label: "Service Name" },
-          { key: "ipAddress", label: "IP Address" },
-          { key: "updatedAt", label: "Updated At" },
-          { key: "updatedBy", label: "Updated By" },
-        ]}
-        sort={sort}
-        order={order as "asc" | "desc" | undefined}
-        onSort={handleSort}
-      />
-      <Pagination
-        page={page}
-        perPage={perPage}
-        total={total}
-        onPageChange={handlePageChange}
-      />
+       {loading ? (
+        <Loader />
+      ) : error ? (
+        <ErrorState />
+      ) : channels.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <>
+          <ChannelTable
+            data={channels}
+            columns={[
+              { key: "provider", label: "Provider" },
+              { key: "serviceName", label: "Service Name" },
+              { key: "ipAddress", label: "IP Address" },
+              { key: "updatedAt", label: "Updated At" },
+              { key: "updatedBy", label: "Updated By" },
+            ]}
+            sort={sort}
+            order={order as "asc" | "desc" | undefined}
+            onSort={handleSort}
+          />
+          <Pagination
+            page={page}
+            perPage={perPage}
+            total={total}
+            onPageChange={handlePageChange}
+            onPerPageChange={handlePerPageChange}
+          />
+        </>
+      )}
     </div>
   );
 }

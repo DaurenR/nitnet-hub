@@ -5,12 +5,14 @@ interface Props {
   perPage: number;
   total: number;
   onPageChange: (page: number) => void;
+  onPerPageChange?: (perPage: number) => void;
 }
 
-export default function Pagination({ page, perPage, total, onPageChange }: Props) {
+export default function Pagination({ page, perPage, total, onPageChange, onPerPageChange }: Props) {
   const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const perPageOptions = [10, 25, 50, 100];
   return (
-    <div className="mt-4 flex items-center gap-4">
+    <div className="mt-4 flex flex-wrap items-center gap-4">
       <button
         className="px-3 py-1 border rounded"
         disabled={page <= 1}
@@ -28,6 +30,19 @@ export default function Pagination({ page, perPage, total, onPageChange }: Props
       >
         Next
       </button>
+      {onPerPageChange && (
+        <select
+          value={perPage}
+          onChange={(e) => onPerPageChange(Number(e.target.value))}
+          className="border rounded p-1"
+        >
+          {perPageOptions.map((n) => (
+            <option key={n} value={n}>
+              {n} / page
+            </option>
+          ))}
+        </select>
+      )}
     </div>
   );
 }
