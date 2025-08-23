@@ -1,4 +1,5 @@
 import { useRouter } from "next/router";
+import { useState } from "react";
 import ChannelTable from "../../components/ChannelTable";
 import SearchForm from "../../components/SearchForm";
 import Pagination from "../../components/Pagination";
@@ -18,6 +19,7 @@ interface MioChannel extends Record<string, unknown> {
 
 export default function MioPage() {
   const router = useRouter();
+  const [refresh, setRefresh] = useState(0);
 
   const getNumber = (v: string | string[] | undefined, def: number) => {
     const n = parseInt(Array.isArray(v) ? v[0] : v || "", 10);
@@ -43,6 +45,7 @@ export default function MioPage() {
     sort,
     order,
     q,
+    refresh
   });
 
   const handlePageChange = (p: number) => {
@@ -86,9 +89,42 @@ export default function MioPage() {
       { shallow: true }
     );
   };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete?")) return;
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/mio/${id}`,
+      { method: "DELETE" }
+    );
+    if (res.ok) {
+      if (channels.length === 1 && page > 1) {
+        router.push(
+          {
+            pathname: router.pathname,
+            query: { ...router.query, page: page - 1 },
+          },
+          undefined,
+          { shallow: true }
+        );
+      } else {
+        setRefresh((r) => r + 1);
+      }
+    }
+  };
+
   return (
     <div className="p-8">
-      <h1 className="text-3xl mb-6 font-bold">MIO Channels</h1>
+      <div className="flex justify-between mb-6">
+        <h1 className="text-3xl font-bold">MIO Channels</h1>
+        <button
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+          onClick={() =>
+            router.push({ pathname: "/mio/create", query: router.query })
+          }
+        >
+          Create
+        </button>
+      </div>
       <SearchForm
         fields={[{ name: "q", label: "Search", defaultValue: q || "" }]}
         onSearch={handleSearch}
@@ -109,6 +145,31 @@ export default function MioPage() {
               { key: "ipAddress", label: "IP Address" },
               { key: "updatedAt", label: "Updated At" },
               { key: "updatedBy", label: "Updated By" },
+              {
+                key: "actions",
+                label: "Actions",
+                render: (row) => (
+                  <>
+                    <button
+                      className="text-blue-600 hover:underline mr-2"
+                      onClick={() =>
+                        router.push({
+                          pathname: `/mio/${row.id}/edit`,
+                          query: router.query,
+                        })
+                      }
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="text-red-600 hover:underline"
+                      onClick={() => handleDelete(row.id as number)}
+                    >
+                      Delete
+                    </button>
+                  </>
+                ),
+              },
             ]}
             sort={sort}
             order={order as "asc" | "desc" | undefined}

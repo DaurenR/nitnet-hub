@@ -1,8 +1,9 @@
 import React from "react";
 
 interface Column<T extends Record<string, unknown>> {
-  key: keyof T;
+  key: string;
   label: string;
+  render?: (row: T) => React.ReactNode;
 }
 
 interface Props<T extends Record<string, unknown>> {
@@ -48,10 +49,14 @@ export default function ChannelTable<T extends Record<string, unknown>>({
           data.map((row, idx) => (
             <tr key={(row.id as React.Key) ?? idx}>
               {columns.map((col) => (
-                <td key={String(col.key)} className="border p-2">
-                  {String(
-                    (row as Record<string, unknown>)[col.key as string] ?? ""
-                  )}
+                <td key={col.key} className="border p-2">
+                  {col.render
+                    ? col.render(row)
+                    : String(
+                        (row as Record<string, unknown>)[
+                          col.key as string
+                        ] ?? ""
+                      )}
                 </td>
               ))}
             </tr>

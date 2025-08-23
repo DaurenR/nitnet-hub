@@ -6,6 +6,7 @@ export interface PagedListParams {
   sort?: string;
   order?: string;
   q?: string;
+  refresh?: number;
 }
 
 export interface PagedListResult<T> {
@@ -17,7 +18,7 @@ export interface PagedListResult<T> {
 
 export default function usePagedList<T>(
   endpoint: string,
-  { page = 1, perPage = 10, sort, order, q }: PagedListParams = {}
+   { page = 1, perPage = 10, sort, order, q, refresh }: PagedListParams = {}
 ): PagedListResult<T> {
   const [data, setData] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
@@ -64,7 +65,7 @@ export default function usePagedList<T>(
     return () => {
       controller.abort();
     };
-  }, [endpoint, page, perPage, sort, order, q]);
+  }, [endpoint, page, perPage, sort, order, q, refresh]);
 
   return { data, total, isLoading, error };
 }
