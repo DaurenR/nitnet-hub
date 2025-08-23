@@ -12,6 +12,7 @@ interface Props<T extends Record<string, unknown>> {
   sort?: string;
   order?: "asc" | "desc";
   onSort?: (field: string) => void;
+  renderActions?: (row: T) => React.ReactNode;
 }
 
 export default function ChannelTable<T extends Record<string, unknown>>({
@@ -20,6 +21,7 @@ export default function ChannelTable<T extends Record<string, unknown>>({
   sort,
   order,
   onSort,
+  renderActions,
 }: Props<T>) {
   return (
     <table className="w-full border-collapse border border-gray-300">
@@ -38,12 +40,13 @@ export default function ChannelTable<T extends Record<string, unknown>>({
               </th>
             );
           })}
+          <th className="border p-2">Actions</th>
         </tr>
       </thead>
       <tbody>
         {data.length === 0 ? (
           <tr>
-            <td colSpan={columns.length}>No data</td>
+            <td colSpan={columns.length + 1}>No data</td>
           </tr>
          ) : (
           data.map((row, idx) => (
@@ -59,6 +62,7 @@ export default function ChannelTable<T extends Record<string, unknown>>({
                       )}
                 </td>
               ))}
+              <td className="border p-2">{renderActions?.(row)}</td>
             </tr>
           ))
         )}

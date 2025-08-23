@@ -1,4 +1,5 @@
 import { useRouter } from "next/router";
+import { useState } from "react";
 import ChannelTable from "../../components/ChannelTable";
 import SearchForm from "../../components/SearchForm";
 import Pagination from "../../components/Pagination";
@@ -16,9 +17,9 @@ interface McriapChannel extends Record<string, unknown> {
   ipAddress: string;
 }
 
-
 export default function McriapPage() {
   const router = useRouter();
+  const [refresh, setRefresh] = useState(0);
 
   const getNumber = (v: string | string[] | undefined, def: number) => {
     const n = parseInt(Array.isArray(v) ? v[0] : v || "", 10);
@@ -33,7 +34,7 @@ export default function McriapPage() {
   const order = getString(router.query.order);
   const q = getString(router.query.q);
 
-   const {
+  const {
     data: channels,
     total,
     isLoading,
@@ -44,6 +45,7 @@ export default function McriapPage() {
     sort,
     order,
     q,
+    refresh,
   });
 
   const handlePageChange = (p: number) => {
@@ -87,6 +89,28 @@ export default function McriapPage() {
       { shallow: true }
     );
   };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete?")) return;
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap/${id}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      if (channels.length === 1 && page > 1) {
+        router.push(
+          {
+            pathname: router.pathname,
+            query: { ...router.query, page: page - 1 },
+          },
+          undefined,
+          { shallow: true }
+        );
+      } else {
+        setRefresh((r) => r + 1);
+      }
+    }
+  };
+
   return (
     <div className="p-8">
       <h1 className="text-3xl mb-6 font-bold">MCIRIAP Channels</h1>
@@ -112,6 +136,27 @@ export default function McriapPage() {
               { key: "region", label: "Region" },
               { key: "ipAddress", label: "IP Address" },
             ]}
+            renderActions={(row) => (
+              <>
+                <button
+                  className="text-blue-600 hover:underline mr-2"
+                  onClick={() =>
+                    router.push({
+                      pathname: `/mcriap/${row.id}/edit`,
+                      query: router.query,
+                    })
+                  }
+                >
+                  Edit
+                </button>
+                <button
+                  className="text-red-600 hover:underline"
+                  onClick={() => handleDelete(row.id as number)}
+                >
+                  Delete
+                </button>
+              </>
+            )}
             sort={sort}
             order={order as "asc" | "desc" | undefined}
             onSort={handleSort}

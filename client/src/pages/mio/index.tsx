@@ -45,7 +45,7 @@ export default function MioPage() {
     sort,
     order,
     q,
-    refresh
+    refresh,
   });
 
   const handlePageChange = (p: number) => {
@@ -92,10 +92,9 @@ export default function MioPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete?")) return;
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/mio/${id}`,
-      { method: "DELETE" }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio/${id}`, {
+      method: "DELETE",
+    });
     if (res.ok) {
       if (channels.length === 1 && page > 1) {
         router.push(
@@ -129,7 +128,7 @@ export default function MioPage() {
         fields={[{ name: "q", label: "Search", defaultValue: q || "" }]}
         onSearch={handleSearch}
       />
-       {isLoading ? (
+      {isLoading ? (
         <Loader />
       ) : error ? (
         <ErrorState />
@@ -145,32 +144,28 @@ export default function MioPage() {
               { key: "ipAddress", label: "IP Address" },
               { key: "updatedAt", label: "Updated At" },
               { key: "updatedBy", label: "Updated By" },
-              {
-                key: "actions",
-                label: "Actions",
-                render: (row) => (
-                  <>
-                    <button
-                      className="text-blue-600 hover:underline mr-2"
-                      onClick={() =>
-                        router.push({
-                          pathname: `/mio/${row.id}/edit`,
-                          query: router.query,
-                        })
-                      }
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="text-red-600 hover:underline"
-                      onClick={() => handleDelete(row.id as number)}
-                    >
-                      Delete
-                    </button>
-                  </>
-                ),
-              },
             ]}
+            renderActions={(row) => (
+              <>
+                <button
+                  className="text-blue-600 hover:underline mr-2"
+                  onClick={() =>
+                    router.push({
+                      pathname: `/mio/${row.id}/edit`,
+                      query: router.query,
+                    })
+                  }
+                >
+                  Edit
+                </button>
+                <button
+                  className="text-red-600 hover:underline"
+                  onClick={() => handleDelete(row.id as number)}
+                >
+                  Delete
+                </button>
+              </>
+            )}
             sort={sort}
             order={order as "asc" | "desc" | undefined}
             onSort={handleSort}
