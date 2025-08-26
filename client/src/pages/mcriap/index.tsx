@@ -96,6 +96,7 @@ export default function McriapPage() {
       method: "DELETE",
     });
     if (res.ok) {
+      alert("Deleted");
       if (channels.length === 1 && page > 1) {
         router.push(
           {
@@ -113,7 +114,17 @@ export default function McriapPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl mb-6 font-bold">MCIRIAP Channels</h1>
+      <div className="flex justify-between mb-6">
+        <h1 className="text-3xl font-bold">MCIRIAP Channels</h1>
+        <button
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+          onClick={() =>
+            router.push({ pathname: "/mcriap/create", query: router.query })
+          }
+        >
+          Create
+        </button>
+      </div>
       <SearchForm
         fields={[{ name: "q", label: "Search", defaultValue: q || "" }]}
         onSearch={handleSearch}
