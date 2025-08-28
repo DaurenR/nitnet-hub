@@ -8,15 +8,7 @@ import ErrorState from "../../components/ErrorState";
 import Loader from "../../components/Loader";
 import usePagedList from "../../hooks/usePagedList";
 import { api, getRole } from "../../lib/api";
-
-interface McriapChannel extends Record<string, unknown> {
-  id: number;
-  agencyName: string;
-  provider: string;
-  bandwidthKbps: number;
-  region: string;
-  ipAddress: string;
-}
+import { Mcriap } from "../../types/mcriap";
 
 export default function McriapPage() {
   const router = useRouter();
@@ -41,7 +33,7 @@ export default function McriapPage() {
     total,
     isLoading,
     error,
-  } = usePagedList<McriapChannel>("mcriap", {
+  } = usePagedList<Mcriap>("mcriap", {
     page,
     perPage,
     sort,
@@ -80,7 +72,22 @@ export default function McriapPage() {
     );
   };
 
+  const allowedSort = new Set([
+    "network",
+    "agencyName",
+    "serviceName",
+    "provider",
+    "region",
+    "bandwidthKbps",
+    "ipAddress",
+    "p2pIp",
+    "externalId",
+    "manager",
+    "createdAt",
+  ]);
+
   const handleSort = (field: string) => {
+    if (!allowedSort.has(field)) return;
     const nextOrder = sort === field && order === "asc" ? "desc" : "asc";
     router.push(
       {
@@ -94,7 +101,7 @@ export default function McriapPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete?")) return;
-     const res = await api(`/mcriap/${id}`, {
+    const res = await api(`/mcriap/${id}`, {
       method: "DELETE",
     });
     if (res.status === 403) {
@@ -148,12 +155,17 @@ export default function McriapPage() {
           <ChannelTable
             data={channels}
             columns={[
-              { key: "id", label: "ID" },
+              { key: "network", label: "Network" },
               { key: "agencyName", label: "Agency" },
+              { key: "serviceName", label: "Service" },
               { key: "provider", label: "Provider" },
-              { key: "bandwidthKbps", label: "Bandwidth" },
               { key: "region", label: "Region" },
+              { key: "bandwidthKbps", label: "Bandwidth" },
               { key: "ipAddress", label: "IP Address" },
+              { key: "p2pIp", label: "P2P IP" },
+              { key: "externalId", label: "External ID" },
+              { key: "manager", label: "Manager" },
+              { key: "createdAt", label: "Created At" },
             ]}
             renderActions={
               role === "manager"

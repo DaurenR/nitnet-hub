@@ -1,14 +1,21 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
 import { api, getRole } from "../../../lib/api";
 
 interface McriapForm {
+  network: string;
   agencyName: string;
+  serviceName: string;
   provider: string;
-  bandwidthKbps: number;
   region: string;
+  bandwidthKbps: number;
   ipAddress: string;
+  p2pIp: string;
+  externalId: string;
+  manager: string;
+  physicalAddress: string;
 }
 
 export default function McriapEdit() {
@@ -21,6 +28,8 @@ export default function McriapEdit() {
     formState: { errors },
     reset,
   } = useForm<McriapForm>();
+
+  const ipRegex = /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/;
 
   useEffect(() => {
     if (!id || Array.isArray(id)) return;
@@ -37,11 +46,17 @@ export default function McriapEdit() {
       })
       .then((data) =>
         reset({
+          network: data.network ?? "",
           agencyName: data.agencyName ?? "",
+          serviceName: data.serviceName ?? "",
           provider: data.provider ?? "",
-          bandwidthKbps: data.bandwidthKbps ?? 0,
           region: data.region ?? "",
+          bandwidthKbps: data.bandwidthKbps ?? 0,
           ipAddress: data.ipAddress ?? "",
+          p2pIp: data.p2pIp ?? "",
+          externalId: data.externalId ?? "",
+          manager: data.manager ?? "",
+          physicalAddress: data.physicalAddress ?? "",
         })
       )
       .catch(() => {});
@@ -62,13 +77,17 @@ export default function McriapEdit() {
       },
       body: JSON.stringify(values),
     });
-     if (res.status === 403) {
+    if (res.status === 403) {
       alert("Forbidden");
       return;
     }
     if (res.ok) {
-      alert("Saved");
-      router.push({ pathname: "/mcriap", query: router.query });
+      toast.success("Saved");
+      const { page, perPage, sort, order, q } = router.query;
+      router.push({
+        pathname: "/mcriap",
+        query: { page, perPage, sort, order, q },
+      });
     }
   };
 
@@ -77,6 +96,16 @@ export default function McriapEdit() {
       <h1 className="text-3xl mb-6 font-bold">Edit MCRIAP Channel</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
+          <label className="block mb-1">Network</label>
+          <input
+            className="border p-2 w-full"
+            {...register("network", { required: true })}
+          />
+          {errors.network && (
+            <p className="text-red-500 text-sm">Network is required</p>
+          )}
+        </div>
+        <div>
           <label className="block mb-1">Agency Name</label>
           <input
             className="border p-2 w-full"
@@ -84,6 +113,16 @@ export default function McriapEdit() {
           />
           {errors.agencyName && (
             <p className="text-red-500 text-sm">Agency Name is required</p>
+          )}
+        </div>
+        <div>
+          <label className="block mb-1">Service Name</label>
+          <input
+            className="border p-2 w-full"
+            {...register("serviceName", { required: true })}
+          />
+          {errors.serviceName && (
+            <p className="text-red-500 text-sm">Service Name is required</p>
           )}
         </div>
         <div>
@@ -97,34 +136,63 @@ export default function McriapEdit() {
           )}
         </div>
         <div>
+          <label className="block mb-1">Region</label>
+          <input className="border p-2 w-full" {...register("region")} />
+        </div>
+        <div>
           <label className="block mb-1">Bandwidth (Kbps)</label>
           <input
             type="number"
+            min={1}
             className="border p-2 w-full"
-            {...register("bandwidthKbps", { required: true, valueAsNumber: true })}
+            {...register("bandwidthKbps", { valueAsNumber: true, min: 1 })}
           />
           {errors.bandwidthKbps && (
-            <p className="text-red-500 text-sm">Bandwidth is required</p>
-          )}
-        </div>
-        <div>
-          <label className="block mb-1">Region</label>
-          <input
-            className="border p-2 w-full"
-            {...register("region", { required: true })}
-          />
-          {errors.region && (
-            <p className="text-red-500 text-sm">Region is required</p>
+            <p className="text-red-500 text-sm">Bandwidth must be at least 1</p>
           )}
         </div>
         <div>
           <label className="block mb-1">IP Address</label>
           <input
             className="border p-2 w-full"
-            {...register("ipAddress", { required: true })}
+            {...register("ipAddress", {
+              validate: (v) => !v || ipRegex.test(v),
+            })}
           />
           {errors.ipAddress && (
-            <p className="text-red-500 text-sm">IP Address is required</p>
+            <p className="text-red-500 text-sm">Invalid IP Address</p>
+          )}
+        </div>
+        <div>
+          <label className="block mb-1">P2P IP</label>
+          <input
+            className="border p-2 w-full"
+             {...register("p2pIp", {
+              validate: (v) => !v || ipRegex.test(v),
+            })}
+          />
+          {errors.p2pIp && (
+            <p className="text-red-500 text-sm">Invalid P2P IP</p>
+          )}
+        </div>
+        <div>
+          <label className="block mb-1">External ID</label>
+          <input className="border p-2 w-full" {...register("externalId")} />
+        </div>
+        <div>
+          <label className="block mb-1">Manager</label>
+          <input className="border p-2 w-full" {...register("manager")} />
+        </div>
+        <div>
+          <label className="block mb-1">Physical Address</label>
+          <input
+            className="border p-2 w-full"
+            {...register("physicalAddress", { required: true })}
+          />
+          {errors.physicalAddress && (
+            <p className="text-red-500 text-sm">
+              Physical Address is required
+            </p>
           )}
         </div>
         <button
