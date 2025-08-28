@@ -5,7 +5,11 @@ export function getRole(): 'support' | 'manager' {
     return stored;
   }
   const envRole = process.env.NEXT_PUBLIC_ROLE;
-  return envRole === 'manager' ? 'manager' : 'support';
+  const role = envRole === 'manager' ? 'manager' : 'support';
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('role', role);
+  }
+  return role;
 }
 
 export async function api(input: string, init: RequestInit = {}) {
