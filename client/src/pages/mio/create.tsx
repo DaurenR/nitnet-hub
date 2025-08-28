@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { api } from "../../lib/api";
+import { api, getRole } from "../../lib/api";
 
 interface MioForm {
   provider: string;
@@ -11,7 +11,7 @@ interface MioForm {
 
 export default function MioCreate() {
   const router = useRouter();
-  const role = process.env.NEXT_PUBLIC_ROLE;
+  const role = getRole();
   const {
     register,
     handleSubmit,

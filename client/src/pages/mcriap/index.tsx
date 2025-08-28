@@ -7,7 +7,7 @@ import EmptyState from "../../components/EmptyState";
 import ErrorState from "../../components/ErrorState";
 import Loader from "../../components/Loader";
 import usePagedList from "../../hooks/usePagedList";
-import { api } from "../../lib/api";
+import { api, getRole } from "../../lib/api";
 
 interface McriapChannel extends Record<string, unknown> {
   id: number;
@@ -21,7 +21,7 @@ interface McriapChannel extends Record<string, unknown> {
 export default function McriapPage() {
   const router = useRouter();
   const [refresh, setRefresh] = useState(0);
-  const role = process.env.NEXT_PUBLIC_ROLE;
+  const role = getRole();
 
   const getNumber = (v: string | string[] | undefined, def: number) => {
     const n = parseInt(Array.isArray(v) ? v[0] : v || "", 10);

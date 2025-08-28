@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { api } from "../../../lib/api";
+import { api, getRole } from "../../../lib/api";
 
 interface McriapForm {
   agencyName: string;
@@ -14,7 +14,7 @@ interface McriapForm {
 export default function McriapEdit() {
   const router = useRouter();
   const { id } = router.query;
-  const role = process.env.NEXT_PUBLIC_ROLE;
+  const role = getRole();
   const {
     register,
     handleSubmit,
