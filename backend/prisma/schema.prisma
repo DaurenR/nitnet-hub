@@ -20,13 +20,13 @@ model McriapChannel {
   physicalAddress String
   serviceName     String
   bandwidthKbps   Int
-  tariffPlan      String
-  connectionType  String
+  tariffPlan      String?
+  connectionType  String?
   provider        String
-  region          String
-  ipAddress       String
-  p2pIp           String
-  manager         String
+  region          String?
+  ipAddress       String?
+  p2pIp           String?
+  manager         String?
   updatedAt       DateTime @default(now())
   updatedBy       String
 
@@ -34,10 +34,21 @@ model McriapChannel {
 }
 
 model MioChannel {
-  id          BigInt   @id @default(autoincrement())
-  provider    String
-  serviceName String
-  ipAddress   String
-  updatedAt   DateTime @default(now())
+  id             BigInt   @id @default(autoincrement())
+  repOfficeName  String?
+  clientName     String
+  endUser        String?
+  physicalAddress String
+  serviceName    String
+  bandwidthKbps  Int
+  tariffPlan     String?
+  provider       String
+  connectionType String?
+  providerId     String?
+  ipAddress      String?
+  p2pIp          String?
+  providerVrf    String?
+  manager        String?
+  updatedAt      DateTime @updatedAt
   updatedBy   String
 }
