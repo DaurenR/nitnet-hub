@@ -20,6 +20,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 - `NEXT_PUBLIC_API_URL` – Base URL for the backend API. Set this in `.env.local` (for example `http://localhost:3001`).
 
+- `NEXT_PUBLIC_ROLE` – Role for the application features. Allowed values: `support` or `manager`.
 
 You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
 
