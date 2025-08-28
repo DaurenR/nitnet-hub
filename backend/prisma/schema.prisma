@@ -26,8 +26,10 @@ model McriapChannel {
   region          String?
   ipAddress       String?
   p2pIp           String?
+  externalId      String?
   manager         String?
-  updatedAt       DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
   updatedBy       String
 
   @@map("channels")
@@ -49,6 +51,7 @@ model MioChannel {
   p2pIp          String?
   providerVrf    String?
   manager        String?
+  createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  updatedBy   String
+  updatedBy      String
 }

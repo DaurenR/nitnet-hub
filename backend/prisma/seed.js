@@ -22,6 +22,7 @@ function generateMcriapChannels() {
     region: faker.location.state(),
     ipAddress: faker.internet.ipv4(),
     p2pIp: faker.internet.ipv4(),
+    externalId: faker.string.uuid(),
     manager: faker.person.fullName(),
     updatedBy: faker.internet.email(),
   }));
@@ -43,8 +44,8 @@ function generateMioChannels() {
       "РРЛ",
     ]),
     providerId: faker.string.uuid(),
-    ipAddress: faker.internet.ip(),
-    p2pIp: faker.internet.ip(),
+    ipAddress: faker.internet.ipv4(),
+    p2pIp: faker.internet.ipv4(),
     providerVrf: faker.string.uuid(),
     manager: faker.person.fullName(),
     updatedBy: faker.internet.email(),

@@ -3,6 +3,7 @@ const { PrismaClient } = require("@prisma/client");
 
 const router = express.Router();
 const prisma = new PrismaClient();
+const ipRegex = /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/;
 
 router.get("/", async (req, res) => {
   try {
@@ -16,16 +17,30 @@ router.get("/", async (req, res) => {
     if (provider) filters.provider = provider;
     if (agency) filters.agencyName = agency;
     if (region) filters.region = region;
-     if (q)
+    if (q)
       filters.OR = [
         { agencyName: { contains: q, mode: "insensitive" } },
         { provider: { contains: q, mode: "insensitive" } },
-        { region: { contains: q, mode: "insensitive" } },
+        { ipAddress: { contains: q, mode: "insensitive" } },
+        { p2pIp: { contains: q, mode: "insensitive" } },
+        { externalId: { contains: q, mode: "insensitive" } },
       ];
+
+    const allowedSort = [
+      "serviceName",
+      "provider",
+      "bandwidthKbps",
+      "region",
+      "createdAt",
+    ];
+    const orderBy =
+      sort && allowedSort.includes(sort)
+        ? { [sort]: order === "desc" ? "desc" : "asc" }
+        : undefined;
 
     const channels = await prisma.mcriapChannel.findMany({
       where: filters,
-      orderBy: sort ? { [sort]: order === 'desc' ? 'desc' : 'asc' } : undefined,
+      orderBy,
       skip,
       take: perPage,
     });
@@ -71,6 +86,28 @@ router.put("/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     const data = req.body;
+    const required = [
+      "network",
+      "agencyName",
+      "physicalAddress",
+      "serviceName",
+      "bandwidthKbps",
+      "provider",
+      "updatedBy",
+    ];
+    for (const field of required) {
+      if (data[field] === undefined || data[field] === null || data[field] === "") {
+        return res.status(400).json({ error: `${field} is required` });
+      }
+    }
+    if (data.bandwidthKbps <= 0)
+      return res
+        .status(400)
+        .json({ error: "bandwidthKbps must be greater than 0" });
+    if (data.ipAddress && !ipRegex.test(data.ipAddress))
+      return res.status(400).json({ error: "Invalid ipAddress" });
+    if (data.p2pIp && !ipRegex.test(data.p2pIp))
+      return res.status(400).json({ error: "Invalid p2pIp" });
 
     const updatedChannel = await prisma.mcriapChannel.update({
       where: { id },
@@ -86,9 +123,9 @@ router.put("/:id", async (req, res) => {
         region: data.region,
         ipAddress: data.ipAddress,
         p2pIp: data.p2pIp,
+        externalId: data.externalId,
         manager: data.manager,
         updatedBy: data.updatedBy,
-        updatedAt: new Date(),
       },
     });
 
@@ -106,21 +143,45 @@ router.post("/", async (req, res) => {
   if (req.role !== "manager")
     return res.status(403).json({ message: "Forbidden" });
   try {
+    const data = req.body;
+    const required = [
+      "network",
+      "agencyName",
+      "physicalAddress",
+      "serviceName",
+      "bandwidthKbps",
+      "provider",
+      "updatedBy",
+    ];
+    for (const field of required) {
+      if (data[field] === undefined || data[field] === null || data[field] === "") {
+        return res.status(400).json({ error: `${field} is required` });
+      }
+    }
+    if (data.bandwidthKbps <= 0)
+      return res
+        .status(400)
+        .json({ error: "bandwidthKbps must be greater than 0" });
+    if (data.ipAddress && !ipRegex.test(data.ipAddress))
+      return res.status(400).json({ error: "Invalid ipAddress" });
+    if (data.p2pIp && !ipRegex.test(data.p2pIp))
+      return res.status(400).json({ error: "Invalid p2pIp" });
     const newChannel = await prisma.mcriapChannel.create({
       data: {
-        network: req.body.network,
-        agencyName: req.body.agencyName,
-        physicalAddress: req.body.physicalAddress,
-        serviceName: req.body.serviceName,
-        bandwidthKbps: req.body.bandwidthKbps,
-        tariffPlan: req.body.tariffPlan,
-        connectionType: req.body.connectionType,
-        provider: req.body.provider,
-        region: req.body.region,
-        ipAddress: req.body.ipAddress,
-        p2pIp: req.body.p2pIp,
-        manager: req.body.manager,
-        updatedBy: req.body.updatedBy,
+        network: data.network,
+        agencyName: data.agencyName,
+        physicalAddress: data.physicalAddress,
+        serviceName: data.serviceName,
+        bandwidthKbps: data.bandwidthKbps,
+        tariffPlan: data.tariffPlan,
+        connectionType: data.connectionType,
+        provider: data.provider,
+        region: data.region,
+        ipAddress: data.ipAddress,
+        p2pIp: data.p2pIp,
+        externalId: data.externalId,
+        manager: data.manager,
+        updatedBy: data.updatedBy,
       },
     });
     res.json({
