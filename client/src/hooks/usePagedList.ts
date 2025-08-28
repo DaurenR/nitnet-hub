@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 
 export interface PagedListParams {
@@ -8,6 +8,7 @@ export interface PagedListParams {
   order?: string;
   q?: string;
   refresh?: number;
+  [key: string]: string | number | undefined;
 }
 
 export interface PagedListResult<T> {
@@ -19,21 +20,27 @@ export interface PagedListResult<T> {
 
 export default function usePagedList<T>(
   endpoint: string,
-   { page = 1, perPage = 10, sort, order, q, refresh }: PagedListParams = {}
+   { page = 1, perPage = 10, refresh, ...rest }: PagedListParams = {},
 ): PagedListResult<T> {
   const [data, setData] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  const restString = JSON.stringify(rest);
+  const query = useMemo(
+    () => JSON.parse(restString) as Record<string, string | number | undefined>,
+    [restString]
+  );
+
   useEffect(() => {
     const params = new URLSearchParams({
       page: String(page),
       perPage: String(perPage),
     });
-    if (sort) params.append("sort", sort);
-    if (order) params.append("order", order);
-    if (q) params.append("q", q);
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined) params.append(key, String(value));
+    });
 
     const controller = new AbortController();
     const url = `/${endpoint}?${params.toString()}`;
@@ -70,7 +77,7 @@ export default function usePagedList<T>(
     return () => {
       controller.abort();
     };
-  }, [endpoint, page, perPage, sort, order, q, refresh]);
+  }, [endpoint, page, perPage, refresh, query]);
 
   return { data, total, isLoading, error };
 }

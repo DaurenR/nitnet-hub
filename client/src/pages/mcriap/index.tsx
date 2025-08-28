@@ -28,6 +28,20 @@ export default function McriapPage() {
   const order = getString(router.query.order);
   const q = getString(router.query.q);
 
+  const columns = [
+    { key: "network", label: "Network" },
+    { key: "agencyName", label: "Agency" },
+    { key: "serviceName", label: "Service" },
+    { key: "provider", label: "Provider" },
+    { key: "region", label: "Region" },
+    { key: "bandwidthKbps", label: "Bandwidth" },
+    { key: "ipAddress", label: "IP Address" },
+    { key: "p2pIp", label: "P2P IP" },
+    { key: "externalId", label: "External ID" },
+    { key: "manager", label: "Manager" },
+    { key: "createdAt", label: "Created At" },
+  ];
+
   const {
     data: channels,
     total,
@@ -72,22 +86,8 @@ export default function McriapPage() {
     );
   };
 
-  const allowedSort = new Set([
-    "network",
-    "agencyName",
-    "serviceName",
-    "provider",
-    "region",
-    "bandwidthKbps",
-    "ipAddress",
-    "p2pIp",
-    "externalId",
-    "manager",
-    "createdAt",
-  ]);
-
   const handleSort = (field: string) => {
-    if (!allowedSort.has(field)) return;
+    if (!columns.find((c) => c.key === field)) return;
     const nextOrder = sort === field && order === "asc" ? "desc" : "asc";
     router.push(
       {
@@ -154,19 +154,7 @@ export default function McriapPage() {
         <>
           <ChannelTable
             data={channels}
-            columns={[
-              { key: "network", label: "Network" },
-              { key: "agencyName", label: "Agency" },
-              { key: "serviceName", label: "Service" },
-              { key: "provider", label: "Provider" },
-              { key: "region", label: "Region" },
-              { key: "bandwidthKbps", label: "Bandwidth" },
-              { key: "ipAddress", label: "IP Address" },
-              { key: "p2pIp", label: "P2P IP" },
-              { key: "externalId", label: "External ID" },
-              { key: "manager", label: "Manager" },
-              { key: "createdAt", label: "Created At" },
-            ]}
+            columns={columns}
             renderActions={
               role === "manager"
                 ? (row) => (

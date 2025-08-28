@@ -28,6 +28,20 @@ export default function MioPage() {
   const order = getString(router.query.order);
   const q = getString(router.query.q);
 
+  const columns = [
+    { key: "clientName", label: "Client Name" },
+    { key: "endUser", label: "End User" },
+    { key: "serviceName", label: "Service Name" },
+    { key: "provider", label: "Provider" },
+    { key: "bandwidthKbps", label: "Bandwidth" },
+    { key: "connectionType", label: "Connection Type" },
+    { key: "ipAddress", label: "IP Address" },
+    { key: "p2pIp", label: "P2P IP" },
+    { key: "providerVrf", label: "Provider VRF" },
+    { key: "manager", label: "Manager" },
+    { key: "createdAt", label: "Created At" },
+  ];
+
   const {
     data: channels,
     total,
@@ -72,22 +86,8 @@ export default function MioPage() {
     );
   };
 
-  const allowedSort = new Set([
-    "clientName",
-    "endUser",
-    "serviceName",
-    "provider",
-    "bandwidthKbps",
-    "connectionType",
-    "ipAddress",
-    "p2pIp",
-    "providerVrf",
-    "manager",
-    "createdAt",
-  ]);
-
   const handleSort = (field: string) => {
-    if (!allowedSort.has(field)) return;
+    if (!columns.find((c) => c.key === field)) return;
     const nextOrder = sort === field && order === "asc" ? "desc" : "asc";
     router.push(
       {
@@ -153,19 +153,7 @@ export default function MioPage() {
         <>
           <ChannelTable
             data={channels}
-            columns={[
-              { key: "clientName", label: "Client Name" },
-              { key: "endUser", label: "End User" },
-              { key: "serviceName", label: "Service Name" },
-              { key: "provider", label: "Provider" },
-              { key: "bandwidthKbps", label: "Bandwidth" },
-              { key: "connectionType", label: "Connection Type" },
-              { key: "ipAddress", label: "IP Address" },
-              { key: "p2pIp", label: "P2P IP" },
-              { key: "providerVrf", label: "Provider VRF" },
-              { key: "manager", label: "Manager" },
-              { key: "createdAt", label: "Created At" },
-            ]}
+            columns={columns}
             renderActions={
               role === "manager"
                 ? (row) => (

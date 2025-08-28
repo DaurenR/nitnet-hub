@@ -29,14 +29,19 @@ export default function ChannelTable<T extends Record<string, unknown>>({
         <tr className="bg-gray-100">
            {columns.map((col) => {
             const key = String(col.key);
+            const isActive = sort === key;
             return (
               <th
                 key={key}
                 className="border p-2 cursor-pointer select-none"
                 onClick={() => onSort?.(key)}
               >
-                {col.label}
-                {sort === key && (order === "asc" ? " ▲" : " ▼")}
+               <span className="flex items-center">
+                  {col.label}
+                  {isActive && (
+                    <span className="ml-1">{order === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </span>
               </th>
             );
           })}
