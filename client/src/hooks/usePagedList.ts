@@ -41,7 +41,10 @@ export default function usePagedList<T>(
     setIsLoading(true);
     setError(null);
 
-    fetch(url, { signal: controller.signal })
+    fetch(url, {
+      signal: controller.signal,
+      headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
+    })
       .then((res) => {
         if (!res.ok) {
           throw new Error(`Request failed with status ${res.status}`);

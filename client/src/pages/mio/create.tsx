@@ -18,7 +18,10 @@ export default function MioCreate() {
   const onSubmit = async (values: MioForm) => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-role": process.env.NEXT_PUBLIC_ROLE,
+      },
       body: JSON.stringify(values),
     });
     if (res.ok) {

@@ -20,7 +20,10 @@ export default function McriapCreate() {
   const onSubmit = async (values: McriapForm) => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-role": process.env.NEXT_PUBLIC_ROLE,
+      },
       body: JSON.stringify(values),
     });
     if (res.ok) {

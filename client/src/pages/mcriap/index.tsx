@@ -94,6 +94,7 @@ export default function McriapPage() {
     if (!confirm("Delete?")) return;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap/${id}`, {
       method: "DELETE",
+      headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
     });
     if (res.ok) {
       alert("Deleted");

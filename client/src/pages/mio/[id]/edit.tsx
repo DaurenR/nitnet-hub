@@ -20,7 +20,9 @@ export default function MioEdit() {
 
   useEffect(() => {
     if (!id || Array.isArray(id)) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio/${id}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio/${id}`, {
+      headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
+    })
       .then((res) => res.json())
       .then((data) =>
         reset({
@@ -35,7 +37,10 @@ export default function MioEdit() {
     if (!id || Array.isArray(id)) return;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-role": process.env.NEXT_PUBLIC_ROLE,
+      },
       body: JSON.stringify(values),
     });
     if (res.ok) {

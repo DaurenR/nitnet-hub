@@ -22,7 +22,9 @@ export default function McriapEdit() {
 
   useEffect(() => {
     if (!id || Array.isArray(id)) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap/${id}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap/${id}`, {
+      headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
+    })
       .then((res) => res.json())
       .then((data) =>
         reset({
@@ -39,7 +41,10 @@ export default function McriapEdit() {
     if (!id || Array.isArray(id)) return;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-role": process.env.NEXT_PUBLIC_ROLE,
+      },
       body: JSON.stringify(values),
     });
     if (res.ok) {

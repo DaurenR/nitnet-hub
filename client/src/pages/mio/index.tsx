@@ -94,6 +94,7 @@ export default function MioPage() {
     if (!confirm("Delete?")) return;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio/${id}`, {
       method: "DELETE",
+      headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
     });
     if (res.ok) {
       if (channels.length === 1 && page > 1) {
