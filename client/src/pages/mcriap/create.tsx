@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { api } from "../../lib/api";
 
 interface McriapForm {
   agencyName: string;
@@ -26,11 +27,10 @@ export default function McriapCreate() {
   }, [role, router]);
 
   const onSubmit = async (values: McriapForm) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap`, {
+    const res = await api(`/mcriap`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-role": process.env.NEXT_PUBLIC_ROLE,
       },
       body: JSON.stringify(values),
     });

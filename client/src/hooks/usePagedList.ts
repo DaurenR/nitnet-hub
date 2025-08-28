@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { api } from "../lib/api";
 
 export interface PagedListParams {
   page?: number;
@@ -35,15 +36,12 @@ export default function usePagedList<T>(
     if (q) params.append("q", q);
 
     const controller = new AbortController();
-    const url = `${
-      process.env.NEXT_PUBLIC_API_URL
-    }/${endpoint}?${params.toString()}`;
+    const url = `/${endpoint}?${params.toString()}`;
     setIsLoading(true);
     setError(null);
 
-    fetch(url, {
+    api(url, {
       signal: controller.signal,
-      headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
     })
       .then((res) => {
         if (res.status === 403) {

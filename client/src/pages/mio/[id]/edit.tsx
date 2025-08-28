@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { api } from "../../../lib/api";
 
 interface MioForm {
   provider: string;
@@ -21,9 +22,7 @@ export default function MioEdit() {
 
   useEffect(() => {
     if (!id || Array.isArray(id)) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio/${id}`, {
-      headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
-    })
+    api(`/mio/${id}`)
       .then((res) => {
         if (res.status === 403) {
           alert("Forbidden");
@@ -52,11 +51,10 @@ export default function MioEdit() {
 
   const onSubmit = async (values: MioForm) => {
     if (!id || Array.isArray(id)) return;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio/${id}`, {
+    const res = await api(`/mio/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "x-role": process.env.NEXT_PUBLIC_ROLE,
       },
       body: JSON.stringify(values),
     });

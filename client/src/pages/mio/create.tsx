@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { api } from "../../lib/api";
 
 interface MioForm {
   provider: string;
@@ -24,11 +25,10 @@ export default function MioCreate() {
   }, [role, router]);
 
   const onSubmit = async (values: MioForm) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio`, {
+    const res = await api(`/mio`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-role": process.env.NEXT_PUBLIC_ROLE,
       },
       body: JSON.stringify(values),
     });

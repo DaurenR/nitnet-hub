@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { api } from "../../../lib/api";
 
 interface McriapForm {
   agencyName: string;
@@ -23,9 +24,7 @@ export default function McriapEdit() {
 
   useEffect(() => {
     if (!id || Array.isArray(id)) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap/${id}`, {
-      headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
-    })
+    api(`/mcriap/${id}`)
       .then((res) => {
         if (res.status === 403) {
           alert("Forbidden");
@@ -56,11 +55,10 @@ export default function McriapEdit() {
 
   const onSubmit = async (values: McriapForm) => {
     if (!id || Array.isArray(id)) return;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap/${id}`, {
+    const res = await api(`/mcriap/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "x-role": process.env.NEXT_PUBLIC_ROLE,
       },
       body: JSON.stringify(values),
     });

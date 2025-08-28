@@ -7,6 +7,7 @@ import EmptyState from "../../components/EmptyState";
 import ErrorState from "../../components/ErrorState";
 import Loader from "../../components/Loader";
 import usePagedList from "../../hooks/usePagedList";
+import { api } from "../../lib/api";
 
 interface McriapChannel extends Record<string, unknown> {
   id: number;
@@ -93,9 +94,8 @@ export default function McriapPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete?")) return;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap/${id}`, {
+     const res = await api(`/mcriap/${id}`, {
       method: "DELETE",
-      headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
     });
     if (res.status === 403) {
       alert("Forbidden");
