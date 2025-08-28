@@ -13,6 +13,7 @@ interface McriapForm {
 export default function McriapEdit() {
   const router = useRouter();
   const { id } = router.query;
+  const role = process.env.NEXT_PUBLIC_ROLE;
   const {
     register,
     handleSubmit,
@@ -36,6 +37,12 @@ export default function McriapEdit() {
         })
       );
   }, [id, reset]);
+
+  useEffect(() => {
+    if (role === "support") {
+      router.replace({ pathname: "/mcriap", query: router.query });
+    }
+  }, [role, router]);
 
   const onSubmit = async (values: McriapForm) => {
     if (!id || Array.isArray(id)) return;

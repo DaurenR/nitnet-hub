@@ -11,6 +11,7 @@ interface MioForm {
 export default function MioEdit() {
   const router = useRouter();
   const { id } = router.query;
+  const role = process.env.NEXT_PUBLIC_ROLE;
   const {
     register,
     handleSubmit,
@@ -32,6 +33,12 @@ export default function MioEdit() {
         })
       );
   }, [id, reset]);
+
+  useEffect(() => {
+    if (role === "support") {
+      router.replace({ pathname: "/mio", query: router.query });
+    }
+  }, [role, router]);
 
   const onSubmit = async (values: MioForm) => {
     if (!id || Array.isArray(id)) return;

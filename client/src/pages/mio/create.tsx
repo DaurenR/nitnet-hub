@@ -1,4 +1,5 @@
 import { useRouter } from "next/router";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 interface MioForm {
@@ -9,11 +10,18 @@ interface MioForm {
 
 export default function MioCreate() {
   const router = useRouter();
+  const role = process.env.NEXT_PUBLIC_ROLE;
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<MioForm>();
+
+  useEffect(() => {
+    if (role === "support") {
+      router.replace({ pathname: "/mio", query: router.query });
+    }
+  }, [role, router]);
 
   const onSubmit = async (values: MioForm) => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio`, {

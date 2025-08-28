@@ -1,4 +1,5 @@
 import { useRouter } from "next/router";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 interface McriapForm {
@@ -11,11 +12,18 @@ interface McriapForm {
 
 export default function McriapCreate() {
   const router = useRouter();
+  const role = process.env.NEXT_PUBLIC_ROLE;
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<McriapForm>();
+
+  useEffect(() => {
+    if (role === "support") {
+      router.replace({ pathname: "/mcriap", query: router.query });
+    }
+  }, [role, router]);
 
   const onSubmit = async (values: McriapForm) => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap`, {
