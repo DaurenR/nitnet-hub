@@ -34,10 +34,11 @@ export default function McriapPage() {
     { key: "serviceName", label: "Service" },
     { key: "provider", label: "Provider" },
     { key: "region", label: "Region" },
-    { key: "bandwidthKbps", label: "Bandwidth" },
+    { key: "bandwidthKbps", label: "Bandwidth (Kbps)", className: "text-right" },
     { key: "ipAddress", label: "IP Address" },
     { key: "p2pIp", label: "P2P IP" },
     { key: "externalId", label: "External ID" },
+    { key: "physicalAddress", label: "Address" },
     { key: "manager", label: "Manager" },
     { key: "createdAt", label: "Created At" },
   ];

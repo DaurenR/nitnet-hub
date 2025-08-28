@@ -4,6 +4,7 @@ interface Column<T extends Record<string, unknown>> {
   key: string;
   label: string;
   render?: (row: T) => React.ReactNode;
+  className?: string;
 }
 
 interface Props<T extends Record<string, unknown>> {
@@ -33,7 +34,9 @@ export default function ChannelTable<T extends Record<string, unknown>>({
             return (
               <th
                 key={key}
-                className="border p-2 cursor-pointer select-none"
+                className={`border p-2 cursor-pointer select-none ${
+                  col.className ?? ""
+                } ${isActive ? "bg-blue-50 font-semibold" : ""}`}
                 onClick={() => onSort?.(key)}
               >
                <span className="flex items-center">
@@ -57,7 +60,7 @@ export default function ChannelTable<T extends Record<string, unknown>>({
           data.map((row, idx) => (
             <tr key={(row.id as React.Key) ?? idx}>
               {columns.map((col) => (
-                <td key={col.key} className="border p-2">
+                <td key={col.key} className={`border p-2 ${col.className ?? ""}`}>
                   {col.render
                     ? col.render(row)
                     : String(
