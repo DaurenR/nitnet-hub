@@ -8,15 +8,7 @@ import ErrorState from "../../components/ErrorState";
 import Loader from "../../components/Loader";
 import usePagedList from "../../hooks/usePagedList";
 import { api, getRole } from "../../lib/api";
-
-interface MioChannel extends Record<string, unknown> {
-  id: number;
-  provider: string;
-  serviceName: string;
-  ipAddress: string;
-  updatedAt: string;
-  updatedBy: string;
-}
+import { MioChannel } from "../../types/mio";
 
 export default function MioPage() {
   const router = useRouter();
@@ -80,7 +72,22 @@ export default function MioPage() {
     );
   };
 
+  const allowedSort = new Set([
+    "clientName",
+    "endUser",
+    "serviceName",
+    "provider",
+    "bandwidthKbps",
+    "connectionType",
+    "ipAddress",
+    "p2pIp",
+    "providerVrf",
+    "manager",
+    "createdAt",
+  ]);
+
   const handleSort = (field: string) => {
+    if (!allowedSort.has(field)) return;
     const nextOrder = sort === field && order === "asc" ? "desc" : "asc";
     router.push(
       {
@@ -147,11 +154,17 @@ export default function MioPage() {
           <ChannelTable
             data={channels}
             columns={[
-              { key: "provider", label: "Provider" },
+              { key: "clientName", label: "Client Name" },
+              { key: "endUser", label: "End User" },
               { key: "serviceName", label: "Service Name" },
+              { key: "provider", label: "Provider" },
+              { key: "bandwidthKbps", label: "Bandwidth" },
+              { key: "connectionType", label: "Connection Type" },
               { key: "ipAddress", label: "IP Address" },
-              { key: "updatedAt", label: "Updated At" },
-              { key: "updatedBy", label: "Updated By" },
+              { key: "p2pIp", label: "P2P IP" },
+              { key: "providerVrf", label: "Provider VRF" },
+              { key: "manager", label: "Manager" },
+              { key: "createdAt", label: "Created At" },
             ]}
             renderActions={
               role === "manager"

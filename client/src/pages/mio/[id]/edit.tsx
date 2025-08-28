@@ -4,9 +4,20 @@ import { useForm } from "react-hook-form";
 import { api, getRole } from "../../../lib/api";
 
 interface MioForm {
-  provider: string;
+  repOfficeName?: string;
+  clientName: string;
+  endUser?: string;
+  physicalAddress: string;
   serviceName: string;
-  ipAddress: string;
+  bandwidthKbps: number;
+  tariffPlan?: string;
+  provider: string;
+  connectionType?: string;
+  providerId?: string;
+  ipAddress?: string;
+  p2pIp?: string;
+  providerVrf?: string;
+  manager?: string;
 }
 
 export default function MioEdit() {
@@ -19,6 +30,8 @@ export default function MioEdit() {
     formState: { errors },
     reset,
   } = useForm<MioForm>();
+
+  const ipRegex = /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/;
 
   useEffect(() => {
     if (!id || Array.isArray(id)) return;
@@ -35,9 +48,20 @@ export default function MioEdit() {
       })
       .then((data) =>
         reset({
-          provider: data.provider ?? "",
+          repOfficeName: data.repOfficeName ?? "",
+          clientName: data.clientName ?? "",
+          endUser: data.endUser ?? "",
+          physicalAddress: data.physicalAddress ?? "",
           serviceName: data.serviceName ?? "",
+          bandwidthKbps: data.bandwidthKbps ?? 0,
+          tariffPlan: data.tariffPlan ?? "",
+          provider: data.provider ?? "",
+          connectionType: data.connectionType ?? "",
+          providerId: data.providerId ?? "",
           ipAddress: data.ipAddress ?? "",
+          p2pIp: data.p2pIp ?? "",
+          providerVrf: data.providerVrf ?? "",
+          manager: data.manager ?? "",
         })
       )
       .catch(() => {});
@@ -73,14 +97,18 @@ export default function MioEdit() {
       <h1 className="text-3xl mb-6 font-bold">Edit MIO Channel</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block mb-1">Provider</label>
+          <label className="block mb-1">Client Name</label>
           <input
             className="border p-2 w-full"
-            {...register("provider", { required: true })}
+            {...register("clientName", { required: true })}
           />
-          {errors.provider && (
-            <p className="text-red-500 text-sm">Provider is required</p>
+          {errors.clientName && (
+            <p className="text-red-500 text-sm">Client Name is required</p>
           )}
+        </div>
+        <div>
+          <label className="block mb-1">End User</label>
+          <input className="border p-2 w-full" {...register("endUser")} />
         </div>
         <div>
           <label className="block mb-1">Service Name</label>
@@ -93,13 +121,67 @@ export default function MioEdit() {
           )}
         </div>
         <div>
+          <label className="block mb-1">Provider</label>
+          <input
+            className="border p-2 w-full"
+            {...register("provider", { required: true })}
+          />
+          {errors.provider && (
+            <p className="text-red-500 text-sm">Provider is required</p>
+          )}
+        </div>
+        <div>
+          <label className="block mb-1">Bandwidth (Kbps)</label>
+          <input
+            type="number"
+            min={1}
+            className="border p-2 w-full"
+            {...register("bandwidthKbps", { valueAsNumber: true, min: 1 })}
+          />
+          {errors.bandwidthKbps && (
+            <p className="text-red-500 text-sm">Bandwidth must be at least 1</p>
+          )}
+        </div>
+        <div>
+          <label className="block mb-1">Connection Type</label>
+          <input className="border p-2 w-full" {...register("connectionType")} />
+        </div>
+        <div>
           <label className="block mb-1">IP Address</label>
           <input
             className="border p-2 w-full"
-            {...register("ipAddress", { required: true })}
+            {...register("ipAddress", { validate: (v) => !v || ipRegex.test(v) })}
           />
           {errors.ipAddress && (
-            <p className="text-red-500 text-sm">IP Address is required</p>
+            <p className="text-red-500 text-sm">Invalid IP Address</p>
+          )}
+        </div>
+        <div>
+          <label className="block mb-1">P2P IP</label>
+          <input
+            className="border p-2 w-full"
+            {...register("p2pIp", { validate: (v) => !v || ipRegex.test(v) })}
+          />
+          {errors.p2pIp && (
+            <p className="text-red-500 text-sm">Invalid P2P IP</p>
+          )}
+        </div>
+        <div>
+          <label className="block mb-1">Provider VRF</label>
+          <input className="border p-2 w-full" {...register("providerVrf")} />
+        </div>
+        <div>
+          <label className="block mb-1">Manager</label>
+          <input className="border p-2 w-full" {...register("manager")} />
+        </div>
+        <div>
+          <label className="block mb-1">Physical Address</label>
+          <input
+            className="border p-2 w-full"
+            {...register("physicalAddress", { required: true })}
+          />
+          {errors.physicalAddress && (
+            <p className="text-red-500 text-sm">Physical Address is required</p>
           )}
         </div>
         <button
