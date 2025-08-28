@@ -64,6 +64,8 @@ router.get("/:id", async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
+  if (req.role !== "manager")
+    return res.status(403).json({ message: "Forbidden" });
   try {
     const id = Number(req.params.id);
     const data = req.body;
@@ -90,6 +92,8 @@ router.put("/:id", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
+  if (req.role !== "manager")
+    return res.status(403).json({ message: "Forbidden" });
   try {
     const newChannel = await prisma.mioChannel.create({
       data: {
@@ -110,6 +114,8 @@ router.post("/", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
+  if (req.role !== "manager")
+    return res.status(403).json({ message: "Forbidden" });
   try {
     const id = Number(req.params.id);
     await prisma.mioChannel.delete({

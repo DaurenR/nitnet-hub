@@ -7,6 +7,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(require("./middleware/role"));
 
 app.use("/mcriap", mcriapRoutes);
 app.use("/mio", mioRoutes);
