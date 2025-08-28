@@ -24,14 +24,24 @@ export default function MioEdit() {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/mio/${id}`, {
       headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 403) {
+          alert("Forbidden");
+          return Promise.reject(new Error("Forbidden"));
+        }
+        if (!res.ok) {
+          throw new Error(`Request failed with status ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) =>
         reset({
           provider: data.provider ?? "",
           serviceName: data.serviceName ?? "",
           ipAddress: data.ipAddress ?? "",
         })
-      );
+      )
+      .catch(() => {});
   }, [id, reset]);
 
   useEffect(() => {
@@ -50,6 +60,10 @@ export default function MioEdit() {
       },
       body: JSON.stringify(values),
     });
+    if (res.status === 403) {
+      alert("Forbidden");
+      return;
+    }
     if (res.ok) {
       alert("Saved");
       router.push({ pathname: "/mio", query: router.query });

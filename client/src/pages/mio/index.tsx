@@ -97,6 +97,10 @@ export default function MioPage() {
       method: "DELETE",
       headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
     });
+    if (res.status === 403) {
+      alert("Forbidden");
+      return;
+    }
     if (res.ok) {
       if (channels.length === 1 && page > 1) {
         router.push(

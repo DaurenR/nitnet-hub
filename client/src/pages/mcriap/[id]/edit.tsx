@@ -26,7 +26,16 @@ export default function McriapEdit() {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/mcriap/${id}`, {
       headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 403) {
+          alert("Forbidden");
+          return Promise.reject(new Error("Forbidden"));
+        }
+        if (!res.ok) {
+          throw new Error(`Request failed with status ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) =>
         reset({
           agencyName: data.agencyName ?? "",
@@ -35,7 +44,8 @@ export default function McriapEdit() {
           region: data.region ?? "",
           ipAddress: data.ipAddress ?? "",
         })
-      );
+      )
+      .catch(() => {});
   }, [id, reset]);
 
   useEffect(() => {
@@ -54,6 +64,10 @@ export default function McriapEdit() {
       },
       body: JSON.stringify(values),
     });
+     if (res.status === 403) {
+      alert("Forbidden");
+      return;
+    }
     if (res.ok) {
       alert("Saved");
       router.push({ pathname: "/mcriap", query: router.query });

@@ -32,6 +32,10 @@ export default function MioCreate() {
       },
       body: JSON.stringify(values),
     });
+    if (res.status === 403) {
+      alert("Forbidden");
+      return;
+    }
     if (res.ok) {
       alert("Saved");
       router.push({ pathname: "/mio", query: router.query });

@@ -34,6 +34,10 @@ export default function McriapCreate() {
       },
       body: JSON.stringify(values),
     });
+    if (res.status === 403) {
+      alert("Forbidden");
+      return;
+    }
     if (res.ok) {
       alert("Saved");
       router.push({ pathname: "/mcriap", query: router.query });

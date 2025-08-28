@@ -97,6 +97,10 @@ export default function McriapPage() {
       method: "DELETE",
       headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
     });
+    if (res.status === 403) {
+      alert("Forbidden");
+      return;
+    }
     if (res.ok) {
       alert("Deleted");
       if (channels.length === 1 && page > 1) {

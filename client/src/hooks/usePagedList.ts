@@ -46,6 +46,10 @@ export default function usePagedList<T>(
       headers: { "x-role": process.env.NEXT_PUBLIC_ROLE },
     })
       .then((res) => {
+        if (res.status === 403) {
+          alert("Forbidden");
+          return Promise.reject(new Error("Forbidden"));
+        }
         if (!res.ok) {
           throw new Error(`Request failed with status ${res.status}`);
         }
