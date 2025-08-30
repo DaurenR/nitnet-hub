@@ -24,9 +24,9 @@ model McriapChannel {
   connectionType  String?
   provider        String
   region          String?
+  externalId      String?
   ipAddress       String?
   p2pIp           String?
-  externalId      String?
   manager         String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -49,7 +49,6 @@ model MioChannel {
   providerId     String?
   ipAddress      String?
   p2pIp          String?
-  providerVrf    String?
   manager        String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
