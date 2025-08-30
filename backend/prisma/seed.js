@@ -18,7 +18,7 @@ function generateMcriapChannels() {
       "ВОЛС",
       "РРЛ",
     ]),
-    provider: faker.company.arrayElement(providerOptions),
+    provider: faker.helpers.arrayElement(providerOptions),
     region: faker.location.state(),
     ipAddress: faker.internet.ipv4(),
     p2pIp: faker.internet.ipv4(),
@@ -37,7 +37,7 @@ function generateMioChannels() {
     serviceName: faker.commerce.productName(),
     bandwidthKbps: faker.helpers.arrayElement(bandwidthOptions),
     tariffPlan: faker.commerce.productAdjective(),
-    provider: faker.company.arrayElement(providerOptions),
+    provider: faker.helpers.arrayElement(providerOptions),
     connectionType: faker.helpers.arrayElement([
       "ADSL",
       "ВОЛС",
