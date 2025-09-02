@@ -58,6 +58,13 @@ export default function MioCreate() {
     <div className="p-8">
       <h1 className="text-3xl mb-6 font-bold">Create MIO Channel</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+         <div>
+          <label className="block mb-1">Rep Office Name</label>
+          <input
+            className="border p-2 w-full"
+            {...register("repOfficeName")}
+          />
+        </div>
         <div>
           <label className="block mb-1">Client Name</label>
           <input
@@ -93,12 +100,20 @@ export default function MioCreate() {
           )}
         </div>
         <div>
+          <label className="block mb-1">Provider ID</label>
+          <input className="border p-2 w-full" {...register("providerId")} />
+        </div>
+        <div>
           <label className="block mb-1">Bandwidth (Kbps)</label>
           <input
             type="number"
             min={1}
             className="border p-2 w-full"
-            {...register("bandwidthKbps", { valueAsNumber: true, min: 1 })}
+            {...register("bandwidthKbps", {
+              required: true,
+              valueAsNumber: true,
+              min: 1,
+            })}
           />
           {errors.bandwidthKbps && (
             <p className="text-red-500 text-sm">Bandwidth must be at least 1</p>

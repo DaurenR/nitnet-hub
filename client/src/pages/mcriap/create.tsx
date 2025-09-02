@@ -11,6 +11,8 @@ interface McriapForm {
   provider: string;
   region: string;
   bandwidthKbps: number;
+  tariffPlan?: string;
+  connectionType?: string;
   ipAddress: string;
   p2pIp: string;
   externalId: string;
@@ -111,11 +113,28 @@ export default function McriapCreate() {
             type="number"
             min={1}
             className="border p-2 w-full"
-            {...register("bandwidthKbps", { valueAsNumber: true, min: 1 })}
+            {...register("bandwidthKbps", {
+              required: true,
+              valueAsNumber: true,
+              min: 1,
+            })}
           />
           {errors.bandwidthKbps && (
-            <p className="text-red-500 text-sm">Bandwidth must be at least 1</p>
+            <p className="text-red-500 text-sm">
+              Bandwidth must be at least 1
+            </p>
           )}
+        </div>
+        <div>
+          <label className="block mb-1">Tariff Plan</label>
+          <input className="border p-2 w-full" {...register("tariffPlan")} />
+        </div>
+        <div>
+          <label className="block mb-1">Connection Type</label>
+          <input
+            className="border p-2 w-full"
+            {...register("connectionType")}
+          />
         </div>
         <div>
           <label className="block mb-1">IP Address</label>
