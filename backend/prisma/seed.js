@@ -22,9 +22,8 @@ function generateMcriapChannels() {
     region: faker.location.state(),
     ipAddress: faker.internet.ipv4(),
     p2pIp: faker.internet.ipv4(),
-    externalId: faker.string.uuid(),
+    externalId: faker.string.numeric({ length: { min: 4, max: 12 } }),
     manager: faker.person.fullName(),
-    updatedBy: faker.internet.email(),
   }));
 }
 
@@ -43,12 +42,10 @@ function generateMioChannels() {
       "ВОЛС",
       "РРЛ",
     ]),
-    providerId: faker.string.uuid(),
+    providerId: faker.string.numeric({ length: { min: 4, max: 12 } }),
     ipAddress: faker.internet.ipv4(),
     p2pIp: faker.internet.ipv4(),
-    providerVrf: faker.string.uuid(),
     manager: faker.person.fullName(),
-    updatedBy: faker.internet.email(),
   }));
 }
 

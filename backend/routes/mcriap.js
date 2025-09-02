@@ -93,7 +93,6 @@ router.put("/:id", async (req, res) => {
       "serviceName",
       "bandwidthKbps",
       "provider",
-      "updatedBy",
     ];
     for (const field of required) {
       if (data[field] === undefined || data[field] === null || data[field] === "") {
@@ -125,7 +124,6 @@ router.put("/:id", async (req, res) => {
         p2pIp: data.p2pIp,
         externalId: data.externalId,
         manager: data.manager,
-        updatedBy: data.updatedBy,
       },
     });
 
@@ -151,7 +149,6 @@ router.post("/", async (req, res) => {
       "serviceName",
       "bandwidthKbps",
       "provider",
-      "updatedBy",
     ];
     for (const field of required) {
       if (data[field] === undefined || data[field] === null || data[field] === "") {
@@ -181,7 +178,6 @@ router.post("/", async (req, res) => {
         p2pIp: data.p2pIp,
         externalId: data.externalId,
         manager: data.manager,
-        updatedBy: data.updatedBy,
       },
     });
     res.json({

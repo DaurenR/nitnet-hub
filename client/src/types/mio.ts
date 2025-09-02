@@ -12,9 +12,7 @@ export interface MioChannel extends Record<string, unknown> {
   providerId?: string;
   ipAddress?: string;
   p2pIp?: string;
-  providerVrf?: string;
   manager?: string;
   createdAt: string;
   updatedAt: string;
-  updatedBy: string;
 }
