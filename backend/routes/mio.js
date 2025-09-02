@@ -7,7 +7,14 @@ const ipRegex = /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/;
 
 router.get("/", async (req, res) => {
   try {
-    const { provider, serviceName, sort, order } = req.query;
+    const {
+      provider,
+      serviceName,
+      tariffPlan,
+      connectionType,
+      sort,
+      order,
+    } = req.query;
     const q = req.query.q?.toString();
     const page = Number(req.query.page) || 1;
     const perPage = Number(req.query.perPage) || 10;
@@ -16,6 +23,8 @@ router.get("/", async (req, res) => {
     const filters = {};
     if (provider) filters.provider = provider;
     if (serviceName) filters.serviceName = serviceName;
+    if (tariffPlan) filters.tariffPlan = tariffPlan;
+    if (connectionType) filters.connectionType = connectionType;
     if (q)
       filters.OR = [
         { clientName: { contains: q, mode: "insensitive" } },
