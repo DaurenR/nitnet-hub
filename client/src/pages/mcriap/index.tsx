@@ -29,18 +29,26 @@ export default function McriapPage() {
   const q = getString(router.query.q);
 
   const columns = [
+    { key: "id", label: "ID" },
     { key: "network", label: "Network" },
     { key: "agencyName", label: "Agency" },
+    { key: "physicalAddress", label: "Address" },
     { key: "serviceName", label: "Service" },
+     {
+      key: "bandwidthKbps",
+      label: "Bandwidth (Kbps)",
+      className: "text-right",
+    },
+    { key: "tariffPlan", label: "Tariff Plan" },
+    { key: "connectionType", label: "Connection Type" },
     { key: "provider", label: "Provider" },
     { key: "region", label: "Region" },
-    { key: "bandwidthKbps", label: "Bandwidth (Kbps)", className: "text-right" },
+    { key: "externalId", label: "External ID" },
     { key: "ipAddress", label: "IP Address" },
     { key: "p2pIp", label: "P2P IP" },
-    { key: "externalId", label: "External ID" },
-    { key: "physicalAddress", label: "Address" },
     { key: "manager", label: "Manager" },
     { key: "createdAt", label: "Created At" },
+    { key: "updatedAt", label: "Updated At" },
   ];
 
   const {

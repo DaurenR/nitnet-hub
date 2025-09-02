@@ -29,24 +29,26 @@ export default function MioPage() {
   const q = getString(router.query.q);
 
   const columns = [
+    { key: "id", label: "ID" },
     { key: "repOfficeName", label: "Rep Office" },
     { key: "clientName", label: "Client" },
     { key: "endUser", label: "End User" },
+    { key: "physicalAddress", label: "Address" },
     { key: "serviceName", label: "Service" },
-    { key: "provider", label: "Provider" },
     {
       key: "bandwidthKbps",
       label: "Bandwidth (Kbps)",
       className: "text-right",
     },
+    { key: "tariffPlan", label: "Tariff Plan" },
+    { key: "provider", label: "Provider" },
     { key: "connectionType", label: "Connection Type" },
     { key: "providerId", label: "Provider ID" },
     { key: "ipAddress", label: "IP Address" },
     { key: "p2pIp", label: "P2P IP" },
-    { key: "providerVrf", label: "Provider VRF" },
-    { key: "physicalAddress", label: "Address" },
     { key: "manager", label: "Manager" },
     { key: "createdAt", label: "Created At" },
+    { key: "updatedAt", label: "Updated At" },
   ];
 
   const {

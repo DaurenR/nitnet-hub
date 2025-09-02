@@ -16,7 +16,6 @@ interface MioForm {
   providerId?: string;
   ipAddress?: string;
   p2pIp?: string;
-  providerVrf?: string;
   manager?: string;
 }
 
@@ -128,10 +127,6 @@ export default function MioCreate() {
           {errors.p2pIp && (
             <p className="text-red-500 text-sm">Invalid P2P IP</p>
           )}
-        </div>
-        <div>
-          <label className="block mb-1">Provider VRF</label>
-          <input className="border p-2 w-full" {...register("providerVrf")} />
         </div>
         <div>
           <label className="block mb-1">Manager</label>
