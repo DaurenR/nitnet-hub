@@ -50,8 +50,65 @@ function generateMioChannels() {
 }
 
 async function main() {
-  const mcriapData = generateMcriapChannels();
-  const mioData = generateMioChannels();
+  const mcriapData = generateMcriapChannels().map(({
+    network,
+    agencyName,
+    physicalAddress,
+    serviceName,
+    bandwidthKbps,
+    tariffPlan,
+    connectionType,
+    provider,
+    region,
+    externalId,
+    ipAddress,
+    p2pIp,
+    manager,
+  }) => ({
+    network,
+    agencyName,
+    physicalAddress,
+    serviceName,
+    bandwidthKbps,
+    tariffPlan,
+    connectionType,
+    provider,
+    region,
+    externalId,
+    ipAddress,
+    p2pIp,
+    manager,
+  }));
+
+  const mioData = generateMioChannels().map(({
+    repOfficeName,
+    clientName,
+    endUser,
+    physicalAddress,
+    serviceName,
+    bandwidthKbps,
+    tariffPlan,
+    provider,
+    connectionType,
+    providerId,
+    ipAddress,
+    p2pIp,
+    manager,
+  }) => ({
+    repOfficeName,
+    clientName,
+    endUser,
+    physicalAddress,
+    serviceName,
+    bandwidthKbps,
+    tariffPlan,
+    provider,
+    connectionType,
+    providerId,
+    ipAddress,
+    p2pIp,
+    manager,
+  }));
 
   await prisma.mcriapChannel.createMany({ data: mcriapData });
   await prisma.mioChannel.createMany({ data: mioData });
