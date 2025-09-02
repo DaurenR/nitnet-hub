@@ -5,6 +5,25 @@ const router = express.Router();
 const prisma = new PrismaClient();
 const ipRegex = /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/;
 
+function buildWhereForQ(fields, ipFields, q) {
+  if (!q) return {};
+  if (ipRegex.test(q)) {
+    return {
+      OR: ipFields.map((f) => ({
+        [f]: { contains: q, mode: "insensitive" },
+      })),
+    };
+  }
+  const tokens = q.trim().split(/\s+/).filter(Boolean);
+  return {
+    AND: tokens.map((token) => ({
+      OR: fields.map((f) => ({
+        [f]: { contains: token, mode: "insensitive" },
+      })),
+    })),
+  };
+}
+
 router.get("/", async (req, res) => {
   try {
     const {
@@ -21,7 +40,23 @@ router.get("/", async (req, res) => {
     const perPage = Number(req.query.perPage) || 10;
     const skip = (page - 1) * perPage;
 
-    const filters = {};
+    const fields = [
+      "network",
+      "agencyName",
+      "physicalAddress",
+      "serviceName",
+      "provider",
+      "region",
+      "tariffPlan",
+      "connectionType",
+      "externalId",
+      "ipAddress",
+      "p2pIp",
+      "manager",
+    ];
+    const ipFields = ["ipAddress", "p2pIp"];
+
+    const filters = buildWhereForQ(fields, ipFields, q);
     if (provider) filters.provider = provider;
     if (agency) filters.agencyName = agency;
     if (region) filters.region = region;
@@ -105,7 +140,11 @@ router.put("/:id", async (req, res) => {
       "provider",
     ];
     for (const field of required) {
-      if (data[field] === undefined || data[field] === null || data[field] === "") {
+      if (
+        data[field] === undefined ||
+        data[field] === null ||
+        data[field] === ""
+      ) {
         return res.status(400).json({ error: `${field} is required` });
       }
     }
@@ -161,7 +200,11 @@ router.post("/", async (req, res) => {
       "provider",
     ];
     for (const field of required) {
-      if (data[field] === undefined || data[field] === null || data[field] === "") {
+      if (
+        data[field] === undefined ||
+        data[field] === null ||
+        data[field] === ""
+      ) {
         return res.status(400).json({ error: `${field} is required` });
       }
     }
