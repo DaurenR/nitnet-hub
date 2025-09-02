@@ -5,14 +5,14 @@ export interface Mcriap extends Record<string, unknown> {
   physicalAddress: string;
   serviceName: string;
   bandwidthKbps: number;
-  tariffPlan: string;
-  connectionType: string;
+  tariffPlan?: string;
+  connectionType?: string;
   provider: string;
-  region: string;
-  ipAddress: string;
-  p2pIp: string;
-  externalId: string;
-  manager: string;
+  region?: string;
+  exgiternalId: string;
+  ipAddress?: string;
+  p2pIp?: string;
+  manager?: string;
   createdAt: string;
   updatedAt: string;
 }
