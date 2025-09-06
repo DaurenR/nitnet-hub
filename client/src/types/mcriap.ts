@@ -9,7 +9,7 @@ export interface Mcriap extends Record<string, unknown> {
   connectionType?: string;
   provider: string;
   region?: string;
-  exgiternalId: string;
+  externalId: string;
   ipAddress?: string;
   p2pIp?: string;
   manager?: string;
