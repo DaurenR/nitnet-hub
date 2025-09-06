@@ -6,9 +6,29 @@ import Pagination from "../../components/Pagination";
 import EmptyState from "../../components/EmptyState";
 import ErrorState from "../../components/ErrorState";
 import Loader from "../../components/Loader";
+import FilterBar from "../../components/FilterBar";
+import MultiSelect from "../../components/MultiSelect";
+import RangeInput from "../../components/RangeInput";
+import DateRange from "../../components/DateRange";
+import Checkbox from "../../components/Checkbox";
 import usePagedList from "../../hooks/usePagedList";
 import { api, getRole } from "../../lib/api";
 import { MioChannel } from "../../types/mio";
+
+const providerOptions = [
+  { value: "ДКБ Казахтелеком", label: "ДКБ Казахтелеком" },
+  { value: "КАР-ТЕЛ", label: "КАР-ТЕЛ" },
+  { value: "Astel", label: "Astel" },
+  { value: "Jusan Mobile", label: "Jusan Mobile" },
+  { value: "АО Транстелеком", label: "АО Транстелеком" },
+  { value: "АО НИТ", label: "АО НИТ" },
+];
+
+const connectionTypeOptions = [
+  { value: "ADSL", label: "ADSL" },
+  { value: "ВОЛС", label: "ВОЛС" },
+  { value: "РРЛ", label: "РРЛ" },
+];
 
 export default function MioPage() {
   const router = useRouter();
@@ -21,12 +41,59 @@ export default function MioPage() {
   };
   const getString = (v: string | string[] | undefined) =>
     Array.isArray(v) ? v[0] : v;
+  const getArray = (v: string | string[] | undefined) =>
+    Array.isArray(v) ? v : v ? [v] : [];
 
   const page = getNumber(router.query.page, 1);
   const perPage = getNumber(router.query.perPage, 10);
   const sort = getString(router.query.sort);
   const order = getString(router.query.order);
   const q = getString(router.query.q);
+
+  const providers = getArray(router.query.provider);
+  const connections = getArray(router.query.connectionType);
+  const bandwidthMin = getString(router.query.bandwidthMin);
+  const bandwidthMax = getString(router.query.bandwidthMax);
+  const createdFrom = getString(router.query.createdFrom);
+  const createdTo = getString(router.query.createdTo);
+  const ipPresent = router.query.ipPresent !== undefined;
+
+  const updateQuery = (changes: Record<string, string | string[] | undefined>) => {
+    const next: Record<string, string | string[] | undefined> = {
+      ...router.query,
+      ...changes,
+      page: "1",
+    };
+    Object.keys(next).forEach((key) => {
+      const value = next[key];
+      if (
+        value === undefined ||
+        value === "" ||
+        (Array.isArray(value) && value.length === 0)
+      ) {
+        delete next[key];
+      }
+    });
+    router.replace({ pathname: router.pathname, query: next }, undefined, {
+      shallow: true,
+    });
+  };
+
+  const removeFilter = (key: string, value?: string) => {
+    const current = router.query[key];
+    if (Array.isArray(current) && value !== undefined) {
+      const next = current.filter((v) => v !== value);
+      updateQuery({ [key]: next.length ? next : undefined });
+    } else {
+      updateQuery({ [key]: undefined });
+    }
+  };
+
+  const resetFilters = () => {
+    router.replace({ pathname: router.pathname, query: { page: "1" } }, undefined, {
+      shallow: true,
+    });
+  };
 
   const columns = [
     { key: "id", label: "ID" },
@@ -86,7 +153,7 @@ export default function MioPage() {
   };
 
   const handleSearch = (values: Record<string, string>) => {
-    router.push(
+    router.replace(
       {
         pathname: router.pathname,
         query: { ...router.query, page: 1, q: values.q },
@@ -153,6 +220,51 @@ export default function MioPage() {
         fields={[{ name: "q", label: "Search", defaultValue: q || "" }]}
         onSearch={handleSearch}
       />
+      <FilterBar
+        query={router.query}
+        total={total}
+        onRemove={removeFilter}
+        onReset={resetFilters}
+      >
+        <MultiSelect
+          name="provider"
+          label="Provider"
+          options={providerOptions}
+          values={providers}
+          onChange={(vals) => updateQuery({ provider: vals })}
+        />
+        <MultiSelect
+          name="connectionType"
+          label="Connection"
+          options={connectionTypeOptions}
+          values={connections}
+          onChange={(vals) => updateQuery({ connectionType: vals })}
+        />
+        <RangeInput
+          label="Bandwidth (Kbps)"
+          minName="bandwidthMin"
+          maxName="bandwidthMax"
+          minValue={bandwidthMin}
+          maxValue={bandwidthMax}
+          onChange={(name, value) => updateQuery({ [name]: value })}
+        />
+        <DateRange
+          label="Created"
+          fromName="createdFrom"
+          toName="createdTo"
+          fromValue={createdFrom}
+          toValue={createdTo}
+          onChange={(name, value) => updateQuery({ [name]: value })}
+        />
+        <Checkbox
+          name="ipPresent"
+          label="IP Present"
+          checked={ipPresent}
+          onChange={(checked) =>
+            updateQuery({ ipPresent: checked ? "1" : undefined })
+          }
+        />
+      </FilterBar>
       {isLoading ? (
         <Loader />
       ) : error ? (
