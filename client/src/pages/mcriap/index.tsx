@@ -57,6 +57,7 @@ export default function McriapPage() {
     isLoading,
     error,
   } = usePagedList<Mcriap>("mcriap", {
+    ...router.query,
     page,
     perPage,
     sort,

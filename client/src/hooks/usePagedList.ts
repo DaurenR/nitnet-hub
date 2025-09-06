@@ -8,7 +8,7 @@ export interface PagedListParams {
   order?: string;
   q?: string;
   refresh?: number;
-  [key: string]: string | number | undefined;
+  [key: string]: string | number | string[] | undefined;
 }
 
 export interface PagedListResult<T> {
@@ -29,7 +29,11 @@ export default function usePagedList<T>(
 
   const restString = JSON.stringify(rest);
   const query = useMemo(
-    () => JSON.parse(restString) as Record<string, string | number | undefined>,
+     () =>
+      JSON.parse(restString) as Record<
+        string,
+        string | number | string[] | undefined
+      >,
     [restString]
   );
 
@@ -39,7 +43,12 @@ export default function usePagedList<T>(
       perPage: String(perPage),
     });
     Object.entries(query).forEach(([key, value]) => {
-      if (value !== undefined) params.append(key, String(value));
+      if (value === undefined) return;
+      if (Array.isArray(value)) {
+        value.forEach((v) => params.append(key, String(v)));
+      } else {
+        params.append(key, String(value));
+      }
     });
 
     const controller = new AbortController();

@@ -57,6 +57,7 @@ export default function MioPage() {
     isLoading,
     error,
   } = usePagedList<MioChannel>("mio", {
+    ...router.query,
     page,
     perPage,
     sort,
