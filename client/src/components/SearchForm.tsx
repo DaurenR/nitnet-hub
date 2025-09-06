@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface Field {
   name: string;
@@ -19,6 +19,16 @@ export default function SearchForm({ fields, onSearch }: Props) {
   const handleChange = (name: string, value: string) => {
     setValues((prev) => ({ ...prev, [name]: value }));
   };
+
+  const firstRun = useRef(true);
+  useEffect(() => {
+    if (firstRun.current) {
+      firstRun.current = false;
+      return;
+    }
+    const timer = setTimeout(() => onSearch(values), 350);
+    return () => clearTimeout(timer);
+  }, [values, onSearch]);
 
   return (
     <div className="mb-6 flex gap-4 items-end">

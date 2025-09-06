@@ -153,14 +153,7 @@ export default function MioPage() {
   };
 
   const handleSearch = (values: Record<string, string>) => {
-    router.replace(
-      {
-        pathname: router.pathname,
-        query: { ...router.query, page: 1, q: values.q },
-      },
-      undefined,
-      { shallow: true }
-    );
+    updateQuery({ q: values.q });
   };
 
   const handleSort = (field: string) => {
