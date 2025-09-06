@@ -24,41 +24,88 @@ function buildWhereForQ(fields, ipFields, q) {
   };
 }
 
+const searchFields = [
+  "repOfficeName",
+  "clientName",
+  "endUser",
+  "physicalAddress",
+  "serviceName",
+  "provider",
+  "connectionType",
+  "providerId",
+  "ipAddress",
+  "p2pIp",
+  "manager",
+];
+const searchIpFields = ["ipAddress", "p2pIp"];
+
+function buildWhere(params = {}) {
+  const {
+    provider,
+    serviceName,
+    tariffPlan,
+    connectionType,
+    bandwidthMin,
+    bandwidthMax,
+    createdFrom,
+    createdTo,
+    ipPresent,
+    q,
+  } = params;
+
+  const conditions = [];
+  const toFilter = (field, value) => {
+    if (value === undefined) return;
+    conditions.push({
+      [field]: Array.isArray(value) ? { in: value } : value,
+    });
+  };
+
+  toFilter("provider", provider);
+  toFilter("serviceName", serviceName);
+  toFilter("tariffPlan", tariffPlan);
+  toFilter("connectionType", connectionType);
+
+  if (bandwidthMin || bandwidthMax) {
+    const range = {};
+    if (bandwidthMin) range.gte = Number(bandwidthMin);
+    if (bandwidthMax) range.lte = Number(bandwidthMax);
+    conditions.push({ bandwidthKbps: range });
+  }
+
+  if (createdFrom || createdTo) {
+    const range = {};
+    if (createdFrom) range.gte = new Date(createdFrom);
+    if (createdTo) range.lte = new Date(createdTo);
+    conditions.push({ createdAt: range });
+  }
+
+  if (ipPresent) {
+    conditions.push({
+      OR: [
+        { ipAddress: { not: null } },
+        { p2pIp: { not: null } },
+      ],
+    });
+  }
+
+  const qFilter = buildWhereForQ(searchFields, searchIpFields, q);
+  if (Object.keys(qFilter).length) conditions.push(qFilter);
+
+  if (conditions.length === 0) return {};
+  if (conditions.length === 1) return conditions[0];
+  return { AND: conditions };
+}
+
+
 router.get("/", async (req, res) => {
   try {
-    const { provider, serviceName, tariffPlan, connectionType, sort, order } =
-      req.query;
-    const q = req.query.q?.toString();
+    const { sort, order } = req.query;
     const page = Number(req.query.page) || 1;
     const perPage = Number(req.query.perPage) || 10;
     const skip = (page - 1) * perPage;
 
-    const fields = [
-      "repOfficeName",
-      "clientName",
-      "endUser",
-      "physicalAddress",
-      "serviceName",
-      "provider",
-      "connectionType",
-      "providerId",
-      "ipAddress",
-      "p2pIp",
-      "manager",
-    ];
-    const ipFields = ["ipAddress", "p2pIp"];
-
-    const filters = buildWhereForQ(fields, ipFields, q);
-    if (provider) filters.provider = provider;
-    if (serviceName) filters.serviceName = serviceName;
-    if (tariffPlan) filters.tariffPlan = tariffPlan;
-    if (connectionType) filters.connectionType = connectionType;
-    if (q)
-      filters.OR = [
-        { clientName: { contains: q, mode: "insensitive" } },
-        { providerId: { contains: q, mode: "insensitive" } },
-        { repOfficeName: { contains: q, mode: "insensitive" } },
-      ];
+    const filters = buildWhere(req.query);
 
     const allowedSort = [
       "serviceName",
