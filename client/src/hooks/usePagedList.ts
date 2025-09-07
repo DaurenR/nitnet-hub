@@ -1,6 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 
+export type ColumnFilter =
+  | { column: string; value: string | string[] | undefined; type?: "text" }
+  | {
+      column: string;
+      type: "numberRange";
+      min?: string | number;
+      max?: string | number;
+    }
+  | {
+      column: string;
+      type: "dateRange";
+      from?: string;
+      to?: string;
+    };
+
 export interface PagedListParams {
   page?: number;
   perPage?: number;
@@ -8,7 +23,8 @@ export interface PagedListParams {
   order?: string;
   q?: string;
   refresh?: number;
-  [key: string]: string | number | string[] | undefined;
+  columnFilters?: ColumnFilter[];
+  [key: string]: string | number | string[] | ColumnFilter[] | undefined;
 }
 
 export interface PagedListResult<T> {
@@ -20,7 +36,13 @@ export interface PagedListResult<T> {
 
 export default function usePagedList<T>(
   endpoint: string,
-   { page = 1, perPage = 10, refresh, ...rest }: PagedListParams = {},
+   {
+    page = 1,
+    perPage = 10,
+    refresh,
+    columnFilters = [],
+    ...rest
+  }: PagedListParams = {},
 ): PagedListResult<T> {
   const [data, setData] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
@@ -28,6 +50,7 @@ export default function usePagedList<T>(
   const [error, setError] = useState<Error | null>(null);
 
   const restString = JSON.stringify(rest);
+  const filtersString = JSON.stringify(columnFilters);
   const query = useMemo(
      () =>
       JSON.parse(restString) as Record<
@@ -35,6 +58,10 @@ export default function usePagedList<T>(
         string | number | string[] | undefined
       >,
     [restString]
+  );
+  const filters = useMemo(
+    () => JSON.parse(filtersString) as ColumnFilter[],
+    [filtersString]
   );
 
   useEffect(() => {
@@ -48,6 +75,34 @@ export default function usePagedList<T>(
         value.forEach((v) => params.append(key, String(v)));
       } else {
         params.append(key, String(value));
+      }
+    });
+
+     filters.forEach((filter) => {
+      if (filter.type === "numberRange") {
+        if (filter.min !== undefined && filter.min !== "") {
+          params.append(`f_${filter.column}Min`, String(filter.min));
+        }
+        if (filter.max !== undefined && filter.max !== "") {
+          params.append(`f_${filter.column}Max`, String(filter.max));
+        }
+        return;
+      }
+      if (filter.type === "dateRange") {
+        if (filter.from) {
+          params.append(`f_${filter.column}From`, filter.from);
+        }
+        if (filter.to) {
+          params.append(`f_${filter.column}To`, filter.to);
+        }
+        return;
+      }
+      const value = filter.value;
+      if (value === undefined || value === "") return;
+      if (Array.isArray(value)) {
+        value.forEach((v) => params.append(`f_${filter.column}`, String(v)));
+      } else {
+        params.append(`f_${filter.column}`, String(value));
       }
     });
 
@@ -86,7 +141,7 @@ export default function usePagedList<T>(
     return () => {
       controller.abort();
     };
-  }, [endpoint, page, perPage, refresh, query]);
+  }, [endpoint, page, perPage, refresh, query, filters]);
 
   return { data, total, isLoading, error };
 }

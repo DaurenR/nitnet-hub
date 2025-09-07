@@ -10,7 +10,7 @@ import MultiSelect from "../../components/MultiSelect";
 import RangeInput from "../../components/RangeInput";
 import DateRange from "../../components/DateRange";
 import Checkbox from "../../components/Checkbox";
-import usePagedList from "../../hooks/usePagedList";
+import usePagedList, { ColumnFilter } from "../../hooks/usePagedList";
 import { api, getRole } from "../../lib/api";
 import { MioChannel } from "../../types/mio";
 
@@ -161,19 +161,37 @@ export default function MioPage() {
     { key: "updatedAt", label: "Updated At" },
   ];
 
+  const columnFilters: ColumnFilter[] = [
+    { column: "provider", value: providers },
+    { column: "connectionType", value: connections },
+    { column: "ipPresent", value: ipPresent ? "1" : undefined },
+    {
+      column: "bandwidth",
+      type: "numberRange",
+      min: bandwidthMin,
+      max: bandwidthMax,
+    },
+    {
+      column: "created",
+      type: "dateRange",
+      from: createdFrom,
+      to: createdTo,
+    },
+  ];
+
   const {
     data: channels,
     total,
     isLoading,
     error,
   } = usePagedList<MioChannel>("mio", {
-    ...router.query,
     page,
     perPage,
     sort,
     order,
     q,
     refresh,
+    ...router.query,
   });
 
   const handlePageChange = (p: number) => {
