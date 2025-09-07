@@ -39,48 +39,41 @@ const searchFields = [
 ];
 const searchIpFields = ["ipAddress", "p2pIp"];
 
-function buildWhere(params = {}) {
-  const {
-    provider,
-    serviceName,
-    tariffPlan,
-    connectionType,
-    bandwidthMin,
-    bandwidthMax,
-    createdFrom,
-    createdTo,
-    ipPresent,
-    q,
-  } = params;
-
+function buildWhere(query = {}) {
   const conditions = [];
-  const toFilter = (field, value) => {
-    if (value === undefined) return;
-    conditions.push({
-      [field]: Array.isArray(value) ? { in: value } : value,
-    });
-  };
+  for (const [key, value] of Object.entries(query)) {
+    if (!key.startsWith("f_")) continue;
+    const field = key.slice(2);
+    if (
+      [
+        "bandwidthMin",
+        "bandwidthMax",
+        "createdFrom",
+        "createdTo",
+      ].includes(field)
+    )
+      continue;
 
-  toFilter("provider", provider);
-  toFilter("serviceName", serviceName);
-  toFilter("tariffPlan", tariffPlan);
-  toFilter("connectionType", connectionType);
-
-  if (bandwidthMin || bandwidthMax) {
-    const range = {};
-    if (bandwidthMin) range.gte = Number(bandwidthMin);
-    if (bandwidthMax) range.lte = Number(bandwidthMax);
-    conditions.push({ bandwidthKbps: range });
+   if (Array.isArray(value)) {
+      conditions.push({ [field]: { in: value } });
+    } else {
+      conditions.push({ [field]: { contains: value, mode: "insensitive" } });
+    }
   }
 
-  if (createdFrom || createdTo) {
-    const range = {};
-    if (createdFrom) range.gte = new Date(createdFrom);
-    if (createdTo) range.lte = new Date(createdTo);
-    conditions.push({ createdAt: range });
-  }
+  const bandwidth = {};
+  if (query.f_bandwidthMin !== undefined)
+    bandwidth.gte = Number(query.f_bandwidthMin);
+  if (query.f_bandwidthMax !== undefined)
+    bandwidth.lte = Number(query.f_bandwidthMax);
+  if (Object.keys(bandwidth).length) conditions.push({ bandwidthKbps: bandwidth });
 
-  if (ipPresent) {
+  const created = {};
+  if (query.f_createdFrom) created.gte = new Date(query.f_createdFrom);
+  if (query.f_createdTo) created.lte = new Date(query.f_createdTo);
+  if (Object.keys(created).length) conditions.push({ createdAt: created });
+
+  if (query.ipPresent) {
     conditions.push({
       OR: [
         { ipAddress: { not: null } },
@@ -89,7 +82,7 @@ function buildWhere(params = {}) {
     });
   }
 
-  const qFilter = buildWhereForQ(searchFields, searchIpFields, q);
+  const qFilter = buildWhereForQ(searchFields, searchIpFields, query.q);
   if (Object.keys(qFilter).length) conditions.push(qFilter);
 
   if (conditions.length === 0) return {};
