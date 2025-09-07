@@ -6,7 +6,6 @@ import Pagination from "../../components/Pagination";
 import EmptyState from "../../components/EmptyState";
 import ErrorState from "../../components/ErrorState";
 import Loader from "../../components/Loader";
-import FilterBar from "../../components/FilterBar";
 import MultiSelect from "../../components/MultiSelect";
 import RangeInput from "../../components/RangeInput";
 import DateRange from "../../components/DateRange";
@@ -58,7 +57,9 @@ export default function McriapPage() {
   const createdTo = getString(router.query.createdTo);
   const ipPresent = router.query.ipPresent !== undefined;
 
-  const updateQuery = (changes: Record<string, string | string[] | undefined>) => {
+  const updateQuery = (
+    changes: Record<string, string | string[] | undefined>
+  ) => {
     const next: Record<string, string | string[] | undefined> = {
       ...router.query,
       ...changes,
@@ -79,42 +80,86 @@ export default function McriapPage() {
     });
   };
 
-  const removeFilter = (key: string, value?: string) => {
-    const current = router.query[key];
-    if (Array.isArray(current) && value !== undefined) {
-      const next = current.filter((v) => v !== value);
-      updateQuery({ [key]: next.length ? next : undefined });
-    } else {
-      updateQuery({ [key]: undefined });
-    }
-  };
-
-  const resetFilters = () => {
-    router.replace({ pathname: router.pathname, query: { page: "1" } }, undefined, {
-      shallow: true,
-    });
-  };
-
   const columns = [
     { key: "id", label: "ID" },
     { key: "network", label: "Network" },
     { key: "agencyName", label: "Agency" },
     { key: "physicalAddress", label: "Address" },
     { key: "serviceName", label: "Service" },
-     {
+    {
       key: "bandwidthKbps",
       label: "Bandwidth (Kbps)",
       className: "text-right",
+      filter: (
+        <RangeInput
+          label=""
+          minName="bandwidthMin"
+          maxName="bandwidthMax"
+          minValue={bandwidthMin}
+          maxValue={bandwidthMax}
+          onChange={(name, value) => updateQuery({ [name]: value })}
+        />
+      ),
     },
     { key: "tariffPlan", label: "Tariff Plan" },
-    { key: "connectionType", label: "Connection Type" },
-    { key: "provider", label: "Provider" },
+    {
+      key: "connectionType",
+      label: "Connection Type",
+      filter: (
+        <MultiSelect
+          name="connectionType"
+          label=""
+          options={connectionTypeOptions}
+          values={connections}
+          onChange={(vals) => updateQuery({ connectionType: vals })}
+        />
+      ),
+    },
+    {
+      key: "provider",
+      label: "Provider",
+      filter: (
+        <MultiSelect
+          name="provider"
+          label=""
+          options={providerOptions}
+          values={providers}
+          onChange={(vals) => updateQuery({ provider: vals })}
+        />
+      ),
+    },
     { key: "region", label: "Region" },
     { key: "externalId", label: "External ID" },
-    { key: "ipAddress", label: "IP Address" },
+    {
+      key: "ipAddress",
+      label: "IP Address",
+      filter: (
+        <Checkbox
+          name="ipPresent"
+          label=""
+          checked={ipPresent}
+          onChange={(checked) =>
+            updateQuery({ ipPresent: checked ? "1" : undefined })
+          }
+        />
+      ),
+    },
     { key: "p2pIp", label: "P2P IP" },
     { key: "manager", label: "Manager" },
-    { key: "createdAt", label: "Created At" },
+    {
+      key: "createdAt",
+      label: "Created At",
+      filter: (
+        <DateRange
+          label=""
+          fromName="createdFrom"
+          toName="createdTo"
+          fromValue={createdFrom}
+          toValue={createdTo}
+          onChange={(name, value) => updateQuery({ [name]: value })}
+        />
+      ),
+    },
     { key: "updatedAt", label: "Updated At" },
   ];
 
@@ -214,51 +259,6 @@ export default function McriapPage() {
         fields={[{ name: "q", label: "Search", defaultValue: q || "" }]}
         onSearch={handleSearch}
       />
-      <FilterBar
-        query={router.query}
-        total={total}
-        onRemove={removeFilter}
-        onReset={resetFilters}
-      >
-        <MultiSelect
-          name="provider"
-          label="Provider"
-          options={providerOptions}
-          values={providers}
-          onChange={(vals) => updateQuery({ provider: vals })}
-        />
-        <MultiSelect
-          name="connectionType"
-          label="Connection"
-          options={connectionTypeOptions}
-          values={connections}
-          onChange={(vals) => updateQuery({ connectionType: vals })}
-        />
-        <RangeInput
-          label="Bandwidth (Kbps)"
-          minName="bandwidthMin"
-          maxName="bandwidthMax"
-          minValue={bandwidthMin}
-          maxValue={bandwidthMax}
-          onChange={(name, value) => updateQuery({ [name]: value })}
-        />
-        <DateRange
-          label="Created"
-          fromName="createdFrom"
-          toName="createdTo"
-          fromValue={createdFrom}
-          toValue={createdTo}
-          onChange={(name, value) => updateQuery({ [name]: value })}
-        />
-        <Checkbox
-          name="ipPresent"
-          label="IP Present"
-          checked={ipPresent}
-          onChange={(checked) =>
-            updateQuery({ ipPresent: checked ? "1" : undefined })
-          }
-        />
-      </FilterBar>
       {isLoading ? (
         <Loader />
       ) : error ? (

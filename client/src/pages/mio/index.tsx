@@ -6,7 +6,6 @@ import Pagination from "../../components/Pagination";
 import EmptyState from "../../components/EmptyState";
 import ErrorState from "../../components/ErrorState";
 import Loader from "../../components/Loader";
-import FilterBar from "../../components/FilterBar";
 import MultiSelect from "../../components/MultiSelect";
 import RangeInput from "../../components/RangeInput";
 import DateRange from "../../components/DateRange";
@@ -79,22 +78,6 @@ export default function MioPage() {
     });
   };
 
-  const removeFilter = (key: string, value?: string) => {
-    const current = router.query[key];
-    if (Array.isArray(current) && value !== undefined) {
-      const next = current.filter((v) => v !== value);
-      updateQuery({ [key]: next.length ? next : undefined });
-    } else {
-      updateQuery({ [key]: undefined });
-    }
-  };
-
-  const resetFilters = () => {
-    router.replace({ pathname: router.pathname, query: { page: "1" } }, undefined, {
-      shallow: true,
-    });
-  };
-
   const columns = [
     { key: "id", label: "ID" },
     { key: "repOfficeName", label: "Rep Office" },
@@ -106,15 +89,75 @@ export default function MioPage() {
       key: "bandwidthKbps",
       label: "Bandwidth (Kbps)",
       className: "text-right",
+      filter: (
+        <RangeInput
+          label=""
+          minName="bandwidthMin"
+          maxName="bandwidthMax"
+          minValue={bandwidthMin}
+          maxValue={bandwidthMax}
+          onChange={(name, value) => updateQuery({ [name]: value })}
+        />
+      ),
     },
     { key: "tariffPlan", label: "Tariff Plan" },
-    { key: "provider", label: "Provider" },
-    { key: "connectionType", label: "Connection Type" },
+    {
+      key: "connectionType",
+      label: "Connection Type",
+      filter: (
+        <MultiSelect
+          name="connectionType"
+          label=""
+          options={connectionTypeOptions}
+          values={connections}
+          onChange={(vals) => updateQuery({ connectionType: vals })}
+        />
+      ),
+    },
+    {
+      key: "provider",
+      label: "Provider",
+      filter: (
+        <MultiSelect
+          name="provider"
+          label=""
+          options={providerOptions}
+          values={providers}
+          onChange={(vals) => updateQuery({ provider: vals })}
+        />
+      ),
+    },
     { key: "providerId", label: "Provider ID" },
-    { key: "ipAddress", label: "IP Address" },
+    {
+      key: "ipAddress",
+      label: "IP Address",
+      filter: (
+        <Checkbox
+          name="ipPresent"
+          label=""
+          checked={ipPresent}
+          onChange={(checked) =>
+            updateQuery({ ipPresent: checked ? "1" : undefined })
+          }
+        />
+      ),
+    },
     { key: "p2pIp", label: "P2P IP" },
     { key: "manager", label: "Manager" },
-    { key: "createdAt", label: "Created At" },
+    {
+      key: "createdAt",
+      label: "Created At",
+      filter: (
+        <DateRange
+          label=""
+          fromName="createdFrom"
+          toName="createdTo"
+          fromValue={createdFrom}
+          toValue={createdTo}
+          onChange={(name, value) => updateQuery({ [name]: value })}
+        />
+      ),
+    },
     { key: "updatedAt", label: "Updated At" },
   ];
 
@@ -213,51 +256,6 @@ export default function MioPage() {
         fields={[{ name: "q", label: "Search", defaultValue: q || "" }]}
         onSearch={handleSearch}
       />
-      <FilterBar
-        query={router.query}
-        total={total}
-        onRemove={removeFilter}
-        onReset={resetFilters}
-      >
-        <MultiSelect
-          name="provider"
-          label="Provider"
-          options={providerOptions}
-          values={providers}
-          onChange={(vals) => updateQuery({ provider: vals })}
-        />
-        <MultiSelect
-          name="connectionType"
-          label="Connection"
-          options={connectionTypeOptions}
-          values={connections}
-          onChange={(vals) => updateQuery({ connectionType: vals })}
-        />
-        <RangeInput
-          label="Bandwidth (Kbps)"
-          minName="bandwidthMin"
-          maxName="bandwidthMax"
-          minValue={bandwidthMin}
-          maxValue={bandwidthMax}
-          onChange={(name, value) => updateQuery({ [name]: value })}
-        />
-        <DateRange
-          label="Created"
-          fromName="createdFrom"
-          toName="createdTo"
-          fromValue={createdFrom}
-          toValue={createdTo}
-          onChange={(name, value) => updateQuery({ [name]: value })}
-        />
-        <Checkbox
-          name="ipPresent"
-          label="IP Present"
-          checked={ipPresent}
-          onChange={(checked) =>
-            updateQuery({ ipPresent: checked ? "1" : undefined })
-          }
-        />
-      </FilterBar>
       {isLoading ? (
         <Loader />
       ) : error ? (
