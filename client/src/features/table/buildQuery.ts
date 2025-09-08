@@ -33,10 +33,10 @@ export default function buildQuery({
 
   columnFilters.forEach((filter) => {
     if (filter.type === "numberRange") {
-      if (filter.min !== undefined && filter.min !== "") {
+      if (typeof filter.min === "number") {
         params.append(`f_${filter.column}Min`, String(filter.min));
       }
-      if (filter.max !== undefined && filter.max !== "") {
+       if (typeof filter.max === "number") {
         params.append(`f_${filter.column}Max`, String(filter.max));
       }
       return;
