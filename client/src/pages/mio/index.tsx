@@ -80,13 +80,13 @@ export default function MioPage() {
       meta: { filterType: "text" },
     },
     {
-      accessorKey: "connectionType",
-      header: "Connection Type",
+      accessorKey: "provider",
+      header: "Provider",
       meta: { filterType: "text" },
     },
     {
-      accessorKey: "provider",
-      header: "Provider",
+      accessorKey: "connectionType",
+      header: "Connection Type",
       meta: { filterType: "text" },
     },
     {

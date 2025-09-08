@@ -1,5 +1,4 @@
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import DataTable from "../../features/table/DataTable";
 import SearchForm from "../../components/SearchForm";
