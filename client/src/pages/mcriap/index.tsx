@@ -1,59 +1,47 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import type {
-  ColumnDef,
-  PaginationState,
-  SortingState,
-} from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import DataTable from "../../features/table/DataTable";
 import SearchForm from "../../components/SearchForm";
 import EmptyState from "../../components/EmptyState";
 import ErrorState from "../../components/ErrorState";
 import Loader from "../../components/Loader";
 import usePagedList from "../../hooks/usePagedList";
-import type { ColumnFilter } from "../../features/table/types";
 import { api, getRole } from "../../lib/api";
 import { Mcriap } from "../../types/mcriap";
 import parseFilters from "../../features/table/parseFilters";
+import buildQuery, { BuildQueryParams } from "../../features/table/buildQuery";
 
 export default function McriapPage() {
   const router = useRouter();
-  const [refresh, setRefresh] = useState(0);
   const role = getRole();
 
-  const getNumber = (v: string | string[] | undefined, def: number) => {
-    const n = parseInt(Array.isArray(v) ? v[0] : v || "", 10);
-    return isNaN(n) ? def : n;
-  };
   const getString = (v: string | string[] | undefined) =>
     Array.isArray(v) ? v[0] : v;
   const q = getString(router.query.q);
+  const sort = getString(router.query.sort);
+  const order = getString(router.query.order);
+  const columnFilters = parseFilters(router.query);
 
-  const [sorting, setSorting] = useState<SortingState>(() => {
-    const sort = getString(router.query.sort);
-    const order = getString(router.query.order);
-    return sort ? [{ id: sort, desc: order === "desc" }] : [];
-  });
-  const [pagination, setPagination] = useState<PaginationState>(() => ({
-    pageIndex: getNumber(router.query.page, 1) - 1,
-    pageSize: getNumber(router.query.perPage, 10),
-  }));
-  const [columnFilters, setColumnFilters] = useState<ColumnFilter[]>(() =>
-    parseFilters(router.query)
-  );
+  const { data: channels, total, page, perPage, isLoading, error } =
+    usePagedList<Mcriap>("/mcriap");
 
-  useEffect(() => {
-    setSorting(() => {
-      const sort = getString(router.query.sort);
-      const order = getString(router.query.order);
-      return sort ? [{ id: sort, desc: order === "desc" }] : [];
+  const update = (params: BuildQueryParams) => {
+    const qs = buildQuery({
+      page,
+      perPage,
+      sort,
+      order,
+      q,
+      columnFilters,
+      ...params,
     });
-    setPagination(() => ({
-      pageIndex: getNumber(router.query.page, 1) - 1,
-      pageSize: getNumber(router.query.perPage, 10),
-    }));
-    setColumnFilters(parseFilters(router.query));
-  }, [router.query]);
+    router.replace(
+      { pathname: router.pathname, query: Object.fromEntries(qs.entries()) },
+      undefined,
+      { shallow: true },
+    );
+  };
 
   const columns: ColumnDef<Mcriap>[] = [
     { accessorKey: "id", header: "ID", meta: { filterType: "numberRange" } },
@@ -106,30 +94,8 @@ export default function McriapPage() {
     },
   ];
 
-  const {
-    data: channels,
-    total,
-    isLoading,
-    error,
-  } = usePagedList<Mcriap>("mcriap", {
-    page: pagination.pageIndex + 1,
-    perPage: pagination.pageSize,
-    sort: sorting[0]?.id as string | undefined,
-    order: sorting[0]?.desc ? "desc" : undefined,
-    q,
-    refresh,
-    columnFilters,
-  });
-
   const handleSearch = (values: Record<string, string>) => {
-    router.replace(
-      {
-        pathname: router.pathname,
-        query: { ...router.query, q: values.q, page: "1" },
-      },
-      undefined,
-      { shallow: true }
-    );
+    update({ q: values.q });
   };
 
   const handleDelete = async (id: number) => {
@@ -142,10 +108,10 @@ export default function McriapPage() {
       return;
     }
     if (res.ok) {
-      if (channels.length === 1 && pagination.pageIndex > 0) {
-        setPagination((p) => ({ ...p, pageIndex: p.pageIndex - 1 }));
+       if (channels.length === 1 && page > 1) {
+        update({ page: page - 1 });
       } else {
-        setRefresh((r) => r + 1);
+        update({ refresh: Date.now() });
       }
     }
   };
@@ -181,19 +147,12 @@ export default function McriapPage() {
             data={channels}
             columns={columns}
             total={total}
-            page={pagination.pageIndex + 1}
-            perPage={pagination.pageSize}
-            onPageChange={(p) =>
-              setPagination((prev) => ({ ...prev, pageIndex: p - 1 }))
-            }
-            onPerPageChange={(pp) =>
-              setPagination({ pageIndex: 0, pageSize: pp })
-            }
+            page={page}
+            perPage={perPage}
+            onPageChange={(p) => update({ page: p })}
+            onPerPageChange={(pp) => update({ perPage: pp, page: 1 })}
             columnFilters={columnFilters}
-            onColumnFiltersChange={(filters) => {
-              setColumnFilters(filters);
-              setPagination((p) => ({ ...p, pageIndex: 0 }));
-            }}
+            onColumnFiltersChange={(filters) => update({ columnFilters: filters })}
             renderActions={
               role === "manager"
                 ? (row) => (
@@ -219,15 +178,13 @@ export default function McriapPage() {
                   )
                 : undefined
             }
-            sort={sorting[0]?.id}
-            order={sorting[0]?.desc ? "desc" : "asc"}
-            onSort={(field) =>
-              setSorting((cur) =>
-                cur[0]?.id === field
-                  ? [{ id: field, desc: !cur[0].desc }]
-                  : [{ id: field, desc: false }]
-              )
-            }
+            sort={sort as string | undefined}
+            order={sort ? (order === "desc" ? "desc" : "asc") : undefined}
+            onSort={(field) => {
+              const nextOrder =
+                sort === field && order !== "desc" ? "desc" : "asc";
+              update({ sort: field, order: nextOrder });
+            }}
           />
         </>
       )}
