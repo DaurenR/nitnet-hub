@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { api } from "../lib/api";
 import buildQuery from "../features/table/buildQuery";
-import parseFilters from "../features/table/parseFilters";
 
 export interface PagedListResult<T> {
   data: T[];
@@ -34,8 +33,11 @@ export default function usePagedList<T>(
   const sort = getString(router.query.sort);
   const order = getString(router.query.order);
   const q = getString(router.query.q);
-  const columnFilters = parseFilters(router.query);
-  const filtersStr = JSON.stringify(columnFilters);
+  const filtersStr = JSON.stringify(
+    Object.fromEntries(
+      Object.entries(router.query).filter(([key]) => key.startsWith("f_")),
+    ),
+  );
 
   // Reset page to 1 when q, sort or filters change
   const prevRef = useRef<{
@@ -43,7 +45,7 @@ export default function usePagedList<T>(
     sort?: string;
     order?: string;
     filters: string;
-  }>();
+  }>({ q, sort, order, filters: "" });
   const queryString = JSON.stringify(router.query);
   useEffect(() => {
     const prev = prevRef.current;
@@ -70,15 +72,18 @@ export default function usePagedList<T>(
     const sort = getString(router.query.sort);
     const order = getString(router.query.order);
     const q = getString(router.query.q);
-    const columnFilters = parseFilters(router.query);
-    const rest: Record<string, string | string[]> = { ...router.query };
+    const rest: Record<string, string | string[] | undefined> = {
+      ...router.query,
+    };
     delete rest.page;
     delete rest.perPage;
     delete rest.sort;
     delete rest.order;
     delete rest.q;
-    Object.keys(rest).forEach((key) => {
-      if (key.startsWith("f_")) delete rest[key];
+    Object.entries(rest).forEach(([key, value]) => {
+      if (key.startsWith("f_") && value === undefined) {
+        delete rest[key];
+      }
     });
     const params = buildQuery({
       page,
@@ -86,7 +91,6 @@ export default function usePagedList<T>(
       sort,
       order,
       q,
-      columnFilters,
       ...(rest as Record<string, string | number | string[] | undefined>),
     });
 

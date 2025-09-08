@@ -7,7 +7,7 @@ import {
 import React from "react";
 import Pagination from "../../components/Pagination";
 import type { ColumnFilter as ColumnFilterType } from "./types";
-import ColumnFilter from "./ColumnFIlter";
+import ColumnFilter from "./ColumnFilter";
 
 interface Meta {
   className?: string;
