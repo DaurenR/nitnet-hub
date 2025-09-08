@@ -1,33 +1,57 @@
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type {
+  PaginationState,
+  SortingState,
+} from "@tanstack/react-table";
 import ChannelTable from "../../components/ChannelTable";
 import SearchForm from "../../components/SearchForm";
 import Pagination from "../../components/Pagination";
 import EmptyState from "../../components/EmptyState";
 import ErrorState from "../../components/ErrorState";
 import Loader from "../../components/Loader";
-import MultiSelect from "../../components/MultiSelect";
-import RangeInput from "../../components/RangeInput";
-import DateRange from "../../components/DateRange";
-import Checkbox from "../../components/Checkbox";
 import usePagedList, { ColumnFilter } from "../../hooks/usePagedList";
 import { api, getRole } from "../../lib/api";
 import { MioChannel } from "../../types/mio";
 
-const providerOptions = [
-  { value: "ДКБ Казахтелеком", label: "ДКБ Казахтелеком" },
-  { value: "КАР-ТЕЛ", label: "КАР-ТЕЛ" },
-  { value: "Astel", label: "Astel" },
-  { value: "Jusan Mobile", label: "Jusan Mobile" },
-  { value: "АО Транстелеком", label: "АО Транстелеком" },
-  { value: "АО НИТ", label: "АО НИТ" },
-];
-
-const connectionTypeOptions = [
-  { value: "ADSL", label: "ADSL" },
-  { value: "ВОЛС", label: "ВОЛС" },
-  { value: "РРЛ", label: "РРЛ" },
-];
+// Parse column filters from query parameters with prefix `f_`
+function parseFilters(
+  query: Record<string, string | string[] | undefined>,
+): ColumnFilter[] {
+  const map: Record<string, ColumnFilter> = {};
+  Object.entries(query).forEach(([key, value]) => {
+    if (!key.startsWith("f_")) return;
+    const raw = key.slice(2);
+    const first = Array.isArray(value) ? value[0] : value;
+    if (raw.endsWith("Min") || raw.endsWith("Max")) {
+      const col = raw.replace(/(Min|Max)$/, "");
+      const filter = (map[col] = map[col] || {
+        column: col,
+        type: "numberRange",
+      });
+      if (raw.endsWith("Min")) filter.min = first;
+      else filter.max = first;
+      return;
+    }
+    if (raw.endsWith("From") || raw.endsWith("To")) {
+      const col = raw.replace(/(From|To)$/, "");
+      const filter = (map[col] = map[col] || {
+        column: col,
+        type: "dateRange",
+      });
+      if (raw.endsWith("From")) filter.from = first;
+      else filter.to = first;
+      return;
+    }
+    const col = raw;
+    const filter = (map[col] = map[col] || { column: col, value: [] });
+    const arr = Array.isArray(value) ? value : [value];
+    filter.value = Array.isArray(filter.value)
+      ? [...(filter.value as string[]), ...arr]
+      : arr;
+  });
+  return Object.values(map);
+}
 
 export default function MioPage() {
   const router = useRouter();
@@ -40,43 +64,74 @@ export default function MioPage() {
   };
   const getString = (v: string | string[] | undefined) =>
     Array.isArray(v) ? v[0] : v;
-  const getArray = (v: string | string[] | undefined) =>
-    Array.isArray(v) ? v : v ? [v] : [];
-
-  const page = getNumber(router.query.page, 1);
-  const perPage = getNumber(router.query.perPage, 10);
-  const sort = getString(router.query.sort);
-  const order = getString(router.query.order);
+  
   const q = getString(router.query.q);
 
-  const providers = getArray(router.query.provider);
-  const connections = getArray(router.query.connectionType);
-  const bandwidthMin = getString(router.query.bandwidthMin);
-  const bandwidthMax = getString(router.query.bandwidthMax);
-  const createdFrom = getString(router.query.createdFrom);
-  const createdTo = getString(router.query.createdTo);
-  const ipPresent = router.query.ipPresent !== undefined;
-
-  const updateQuery = (changes: Record<string, string | string[] | undefined>) => {
-    const next: Record<string, string | string[] | undefined> = {
-      ...router.query,
-      ...changes,
-      page: "1",
-    };
-    Object.keys(next).forEach((key) => {
-      const value = next[key];
-      if (
-        value === undefined ||
-        value === "" ||
-        (Array.isArray(value) && value.length === 0)
-      ) {
-        delete next[key];
-      }
+  const [sorting, setSorting] = useState<SortingState>(() => {
+    const sort = getString(router.query.sort);
+    const order = getString(router.query.order);
+    return sort ? [{ id: sort, desc: order === "desc" }] : [];
     });
-    router.replace({ pathname: router.pathname, query: next }, undefined, {
+  const [pagination, setPagination] = useState<PaginationState>(() => ({
+    pageIndex: getNumber(router.query.page, 1) - 1,
+    pageSize: getNumber(router.query.perPage, 10),
+  }));
+  const [columnFilters, setColumnFilters] = useState<ColumnFilter[]>(() =>
+    parseFilters(router.query),
+  );
+
+  // Sync state with query changes
+  useEffect(() => {
+    setSorting(() => {
+      const sort = getString(router.query.sort);
+      const order = getString(router.query.order);
+      return sort ? [{ id: sort, desc: order === "desc" }] : [];
+    });
+    setPagination(() => ({
+      pageIndex: getNumber(router.query.page, 1) - 1,
+      pageSize: getNumber(router.query.perPage, 10),
+    }));
+    setColumnFilters(parseFilters(router.query));
+  }, [router.query]);
+
+   // Sync query with state
+  useEffect(() => {
+    const query: Record<string, string | string[] | undefined> = {
+      ...router.query,
+    };
+    query.page = String(pagination.pageIndex + 1);
+    query.perPage = String(pagination.pageSize);
+    if (sorting[0]) {
+      query.sort = sorting[0].id;
+      query.order = sorting[0].desc ? "desc" : "asc";
+    } else {
+      delete query.sort;
+      delete query.order;
+    }
+    Object.keys(query).forEach((key) => {
+      if (key.startsWith("f_")) delete query[key];
+    });
+    columnFilters.forEach((f) => {
+      if (f.type === "numberRange") {
+        if (f.min !== undefined && f.min !== "")
+          query[`f_${f.column}Min`] = String(f.min);
+        if (f.max !== undefined && f.max !== "")
+          query[`f_${f.column}Max`] = String(f.max);
+        return;
+      }
+      if (f.type === "dateRange") {
+        if (f.from) query[`f_${f.column}From`] = f.from;
+        if (f.to) query[`f_${f.column}To`] = f.to;
+        return;
+      }
+      const val = f.value;
+      if (val === undefined || val === "") return;
+      query[`f_${f.column}`] = Array.isArray(val) ? val : String(val);
+    });
+     router.replace({ pathname: router.pathname, query }, undefined, {
       shallow: true,
     });
-  };
+  }, [sorting, pagination, columnFilters, router]);
 
   const columns = [
     { key: "id", label: "ID" },
@@ -89,144 +144,39 @@ export default function MioPage() {
       key: "bandwidthKbps",
       label: "Bandwidth (Kbps)",
       className: "text-right",
-      filter: (
-        <RangeInput
-          label=""
-          minName="bandwidthMin"
-          maxName="bandwidthMax"
-          minValue={bandwidthMin}
-          maxValue={bandwidthMax}
-          onChange={(name, value) => updateQuery({ [name]: value })}
-        />
-      ),
     },
     { key: "tariffPlan", label: "Tariff Plan" },
-    {
-      key: "connectionType",
-      label: "Connection Type",
-      filter: (
-        <MultiSelect
-          name="connectionType"
-          label=""
-          options={connectionTypeOptions}
-          values={connections}
-          onChange={(vals) => updateQuery({ connectionType: vals })}
-        />
-      ),
-    },
-    {
-      key: "provider",
-      label: "Provider",
-      filter: (
-        <MultiSelect
-          name="provider"
-          label=""
-          options={providerOptions}
-          values={providers}
-          onChange={(vals) => updateQuery({ provider: vals })}
-        />
-      ),
-    },
+    { key: "connectionType", label: "Connection Type" },
+    { key: "provider", label: "Provider" },
     { key: "providerId", label: "Provider ID" },
-    {
-      key: "ipAddress",
-      label: "IP Address",
-      filter: (
-        <Checkbox
-          name="ipPresent"
-          label=""
-          checked={ipPresent}
-          onChange={(checked) =>
-            updateQuery({ ipPresent: checked ? "1" : undefined })
-          }
-        />
-      ),
-    },
+    { key: "ipAddress", label: "IP Address" },
     { key: "p2pIp", label: "P2P IP" },
     { key: "manager", label: "Manager" },
-    {
-      key: "createdAt",
-      label: "Created At",
-      filter: (
-        <DateRange
-          label=""
-          fromName="createdFrom"
-          toName="createdTo"
-          fromValue={createdFrom}
-          toValue={createdTo}
-          onChange={(name, value) => updateQuery({ [name]: value })}
-        />
-      ),
-    },
+    { key: "createdAt", label: "Created At" },
     { key: "updatedAt", label: "Updated At" },
   ];
 
-  const columnFilters: ColumnFilter[] = [
-    { column: "provider", value: providers },
-    { column: "connectionType", value: connections },
-    { column: "ipPresent", value: ipPresent ? "1" : undefined },
+   const { data: channels, total, isLoading, error } = usePagedList<MioChannel>(
+    "mio",
     {
-      column: "bandwidth",
-      type: "numberRange",
-      min: bandwidthMin,
-      max: bandwidthMax,
+      page: pagination.pageIndex + 1,
+      perPage: pagination.pageSize,
+      sort: sorting[0]?.id as string | undefined,
+      order: sorting[0]?.desc ? "desc" : undefined,
+      q,
+      refresh,
+      columnFilters,
     },
-    {
-      column: "created",
-      type: "dateRange",
-      from: createdFrom,
-      to: createdTo,
-    },
-  ];
-
-  const {
-    data: channels,
-    total,
-    isLoading,
-    error,
-  } = usePagedList<MioChannel>("mio", {
-    page,
-    perPage,
-    sort,
-    order,
-    q,
-    refresh,
-    ...router.query,
-  });
-
-  const handlePageChange = (p: number) => {
-    router.push(
-      { pathname: router.pathname, query: { ...router.query, page: p } },
-      undefined,
-      { shallow: true }
-    );
-  };
-
-  const handlePerPageChange = (pp: number) => {
-    router.push(
-      {
-        pathname: router.pathname,
-        query: { ...router.query, page: 1, perPage: pp },
-      },
-      undefined,
-      { shallow: true }
-    );
-  };
+  );
 
   const handleSearch = (values: Record<string, string>) => {
-    updateQuery({ q: values.q });
-  };
-
-  const handleSort = (field: string) => {
-    if (!columns.find((c) => c.key === field)) return;
-    const nextOrder = sort === field && order === "asc" ? "desc" : "asc";
-    router.push(
+    router.replace(
       {
         pathname: router.pathname,
-        query: { ...router.query, page: 1, sort: field, order: nextOrder },
+        query: { ...router.query, q: values.q, page: "1" },
       },
       undefined,
-      { shallow: true }
+      { shallow: true },
     );
   };
 
@@ -240,15 +190,8 @@ export default function MioPage() {
       return;
     }
     if (res.ok) {
-      if (channels.length === 1 && page > 1) {
-        router.push(
-          {
-            pathname: router.pathname,
-            query: { ...router.query, page: page - 1 },
-          },
-          undefined,
-          { shallow: true }
-        );
+       if (channels.length === 1 && pagination.pageIndex > 0) {
+        setPagination((p) => ({ ...p, pageIndex: p.pageIndex - 1 }));
       } else {
         setRefresh((r) => r + 1);
       }
@@ -310,16 +253,26 @@ export default function MioPage() {
                   )
                 : undefined
             }
-            sort={sort}
-            order={order as "asc" | "desc" | undefined}
-            onSort={handleSort}
+            sort={sorting[0]?.id}
+            order={sorting[0]?.desc ? "desc" : "asc"}
+            onSort={(field) =>
+              setSorting((cur) =>
+                cur[0]?.id === field
+                  ? [{ id: field, desc: !cur[0].desc }]
+                  : [{ id: field, desc: false }],
+              )
+            }
           />
           <Pagination
-            page={page}
-            perPage={perPage}
+            page={pagination.pageIndex + 1}
+            perPage={pagination.pageSize}
             total={total}
-            onPageChange={handlePageChange}
-            onPerPageChange={handlePerPageChange}
+             onPageChange={(p) =>
+              setPagination((prev) => ({ ...prev, pageIndex: p - 1 }))
+            }
+            onPerPageChange={(pp) =>
+              setPagination({ pageIndex: 0, pageSize: pp })
+            }
           />
         </>
       )}
