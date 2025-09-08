@@ -1,20 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
+import type { ColumnFilter } from "../features/table/types";
 
-export type ColumnFilter =
-  | { column: string; value: string | string[] | undefined; type?: "text" }
-  | {
-      column: string;
-      type: "numberRange";
-      min?: string | number;
-      max?: string | number;
-    }
-  | {
-      column: string;
-      type: "dateRange";
-      from?: string;
-      to?: string;
-    };
+export type { ColumnFilter };
 
 export interface PagedListParams {
   page?: number;

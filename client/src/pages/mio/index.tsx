@@ -14,49 +14,7 @@ import Loader from "../../components/Loader";
 import usePagedList, { ColumnFilter } from "../../hooks/usePagedList";
 import { api, getRole } from "../../lib/api";
 import { MioChannel } from "../../types/mio";
-
-// Parse column filters from query parameters with prefix `f_`
-function parseFilters(
-  query: Record<string, string | string[] | undefined>
-): ColumnFilter[] {
-  const map: Record<string, ColumnFilter> = {};
-  Object.entries(query).forEach(([key, value]) => {
-    if (!key.startsWith("f_")) return;
-    const raw = key.slice(2);
-    const first = Array.isArray(value) ? value[0] : value;
-    if (raw.endsWith("Min") || raw.endsWith("Max")) {
-      const col = raw.replace(/(Min|Max)$/, "");
-      const filter = (map[col] = map[col] || {
-        column: col,
-        type: "numberRange",
-      });
-      if (raw.endsWith("Min")) filter.min = first;
-      else filter.max = first;
-      return;
-    }
-    if (raw.endsWith("From") || raw.endsWith("To")) {
-      const col = raw.replace(/(From|To)$/, "");
-      const filter = (map[col] = map[col] || {
-        column: col,
-        type: "dateRange",
-      });
-      if (raw.endsWith("From")) filter.from = first;
-      else filter.to = first;
-      return;
-    }
-    const col = raw;
-    const filter = (map[col] = map[col] || {
-      column: col,
-      value: [],
-      type: "text",
-    });
-    const arr = Array.isArray(value) ? value : [value];
-    filter.value = Array.isArray(filter.value)
-      ? [...(filter.value as string[]), ...arr]
-      : arr;
-  });
-  return Object.values(map);
-}
+import parseFilters from "../../features/table/parseFilters";
 
 export default function MioPage() {
   const router = useRouter();
