@@ -23,19 +23,21 @@ export default function ColumnFilter({
     onChange?.(next);
   };
 
-  const updateNumberRangeFilter = (
-    part: "min" | "max",
-    value: string,
-  ) => {
+  const updateNumberRangeFilter = (part: "min" | "max", value: string) => {
+    const parsed = value === "" ? undefined : Number(value);
+    const num = Number.isFinite(parsed) ? parsed : undefined;
     const existing = getFilter(id);
     const nextFilter =
       existing && existing.type === "numberRange"
         ? { ...existing }
         : { column: id, type: "numberRange" as const };
-    if (part === "min") nextFilter.min = value;
-    else nextFilter.max = value;
-    if (!nextFilter.min) delete nextFilter.min;
-    if (!nextFilter.max) delete nextFilter.max;
+    if (part === "min") {
+      if (num !== undefined) nextFilter.min = num;
+      else delete nextFilter.min;
+    } else {
+      if (num !== undefined) nextFilter.max = num;
+      else delete nextFilter.max;
+    }
     const next = columnFilters.filter((f) => f.column !== id);
     if (nextFilter.min !== undefined || nextFilter.max !== undefined) {
       next.push(nextFilter);
@@ -43,10 +45,7 @@ export default function ColumnFilter({
     onChange?.(next);
   };
 
-  const updateDateRangeFilter = (
-    part: "from" | "to",
-    value: string,
-  ) => {
+  const updateDateRangeFilter = (part: "from" | "to", value: string) => {
     const existing = getFilter(id);
     const nextFilter =
       existing && existing.type === "dateRange"
@@ -66,7 +65,7 @@ export default function ColumnFilter({
   if (filterType === "text") {
     const existing = getFilter(id);
     const val =
-       existing && existing.type === "text" ? existing.value ?? "" : "";
+      existing && existing.type === "text" ? existing.value ?? "" : "";
     return (
       <input
         className="w-full border p-1"
@@ -79,23 +78,23 @@ export default function ColumnFilter({
   if (filterType === "numberRange") {
     const existing = getFilter(id);
     const min =
-      existing && existing.type === "numberRange" ? existing.min ?? "" : "";
+      existing && existing.type === "numberRange" ? existing.min : undefined;
     const max =
-      existing && existing.type === "numberRange" ? existing.max ?? "" : "";
+     existing && existing.type === "numberRange" ? existing.max : undefined;
     return (
       <div className="flex flex-col">
         <input
           type="number"
           placeholder="Min"
           className="w-full border p-1 mb-1"
-          value={min as string}
+          value={min ?? ""}
           onChange={(e) => updateNumberRangeFilter("min", e.target.value)}
         />
         <input
           type="number"
           placeholder="Max"
           className="w-full border p-1"
-          value={max as string}
+          value={max ?? ""}
           onChange={(e) => updateNumberRangeFilter("max", e.target.value)}
         />
       </div>
