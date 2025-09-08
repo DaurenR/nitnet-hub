@@ -57,45 +57,6 @@ export default function MioPage() {
     setColumnFilters(parseFilters(router.query));
   }, [router.query]);
 
-  // Sync query with state
-  useEffect(() => {
-    const query: Record<string, string | string[] | undefined> = {
-      ...router.query,
-    };
-    query.page = String(pagination.pageIndex + 1);
-    query.perPage = String(pagination.pageSize);
-    if (sorting[0]) {
-      query.sort = sorting[0].id;
-      query.order = sorting[0].desc ? "desc" : "asc";
-    } else {
-      delete query.sort;
-      delete query.order;
-    }
-    Object.keys(query).forEach((key) => {
-      if (key.startsWith("f_")) delete query[key];
-    });
-    columnFilters.forEach((f) => {
-      if (f.type === "numberRange") {
-        if (f.min !== undefined && f.min !== "")
-          query[`f_${f.column}Min`] = String(f.min);
-        if (f.max !== undefined && f.max !== "")
-          query[`f_${f.column}Max`] = String(f.max);
-        return;
-      }
-      if (f.type === "dateRange") {
-        if (f.from) query[`f_${f.column}From`] = f.from;
-        if (f.to) query[`f_${f.column}To`] = f.to;
-        return;
-      }
-      const val = f.value;
-      if (val === undefined || val === "") return;
-      query[`f_${f.column}`] = Array.isArray(val) ? val : String(val);
-    });
-    router.replace({ pathname: router.pathname, query }, undefined, {
-      shallow: true,
-    });
-  }, [sorting, pagination, columnFilters, router]);
-
   const columns: ColumnDef<MioChannel>[] = [
     { accessorKey: "id", header: "ID", meta: { filterType: "numberRange" } },
     {

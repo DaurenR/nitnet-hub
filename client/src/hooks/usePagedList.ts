@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import { api } from "../lib/api";
 import type { ColumnFilter } from "../features/table/types";
+import buildQuery from "../features/table/buildQuery";
 
 export interface PagedListParams {
   page?: number;
@@ -34,6 +36,7 @@ export default function usePagedList<T>(
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const router = useRouter();
 
   const restString = JSON.stringify(rest);
   const filtersString = JSON.stringify(columnFilters);
@@ -51,45 +54,11 @@ export default function usePagedList<T>(
   );
 
   useEffect(() => {
-    const params = new URLSearchParams({
-      page: String(page),
-      perPage: String(perPage),
-    });
-    Object.entries(query).forEach(([key, value]) => {
-      if (value === undefined) return;
-      if (Array.isArray(value)) {
-        value.forEach((v) => params.append(key, String(v)));
-      } else {
-        params.append(key, String(value));
-      }
-    });
-
-     filters.forEach((filter) => {
-      if (filter.type === "numberRange") {
-        if (filter.min !== undefined && filter.min !== "") {
-          params.append(`f_${filter.column}Min`, String(filter.min));
-        }
-        if (filter.max !== undefined && filter.max !== "") {
-          params.append(`f_${filter.column}Max`, String(filter.max));
-        }
-        return;
-      }
-      if (filter.type === "dateRange") {
-        if (filter.from) {
-          params.append(`f_${filter.column}From`, filter.from);
-        }
-        if (filter.to) {
-          params.append(`f_${filter.column}To`, filter.to);
-        }
-        return;
-      }
-      const value = filter.value;
-      if (value === undefined || value === "") return;
-      if (Array.isArray(value)) {
-        value.forEach((v) => params.append(`f_${filter.column}`, String(v)));
-      } else {
-        params.append(`f_${filter.column}`, String(value));
-      }
+    const params = buildQuery({
+      page,
+      perPage,
+      columnFilters: filters,
+      ...query,
     });
 
     const controller = new AbortController();
@@ -128,6 +97,20 @@ export default function usePagedList<T>(
       controller.abort();
     };
   }, [endpoint, page, perPage, refresh, query, filters]);
+
+  useEffect(() => {
+    const params = buildQuery({
+      page,
+      perPage,
+      columnFilters: filters,
+      ...query,
+    });
+    const qs = params.toString();
+    const pathname = router.pathname;
+    router.replace(qs ? `${pathname}?${qs}` : pathname, undefined, {
+      shallow: true,
+    });
+  }, [router, page, perPage, query, filters]);
 
   return { data, total, isLoading, error };
 }
