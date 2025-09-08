@@ -66,9 +66,7 @@ export default function ColumnFilter({
   if (filterType === "text") {
     const existing = getFilter(id);
     const val =
-      existing && existing.type !== "numberRange" && existing.type !== "dateRange"
-        ? (existing as { value: string | string[] | undefined }).value ?? ""
-        : "";
+       existing && existing.type === "text" ? existing.value ?? "" : "";
     return (
       <input
         className="w-full border p-1"

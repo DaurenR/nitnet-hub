@@ -51,17 +51,18 @@ export default function parseFilters(
     const filter = (map[col] as TextFilter) || {
       column: col,
       type: "text",
-      value: [],
     };
     const arr = Array.isArray(value)
       ? value
       : v !== undefined
       ? [v]
       : [];
-    filter.value = Array.isArray(filter.value)
-      ? [...filter.value, ...arr]
-      : arr;
-    map[col] = filter;
+     if (arr.length > 0) {
+      filter.value = Array.isArray(filter.value)
+        ? [...filter.value, ...arr]
+        : arr;
+      map[col] = filter;
+    }
   });
 
   return Object.values(map);

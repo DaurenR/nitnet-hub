@@ -1,19 +1,19 @@
-export interface TextFilter {
+export type TextFilter = {
+  type: 'text';
   column: string;
-  value: string | string[] | undefined;
-  type?: "text";
-}
+  value?: string | string[];
+};
 
-export interface NumberRangeFilter {
+export type NumberRangeFilter = {
+  type: 'numberRange';
   column: string;
-  type: "numberRange";
   min?: number;
   max?: number;
 }
 
-export interface DateRangeFilter {
+export type DateRangeFilter = {
+  type: 'dateRange';
   column: string;
-  type: "dateRange";
   from?: string;
   to?: string;
 }
