@@ -5,9 +5,8 @@ import type {
   PaginationState,
   SortingState,
 } from "@tanstack/react-table";
-import ChannelTable from "../../components/ChannelTable";
+import DataTable from "../../features/table/DataTable";
 import SearchForm from "../../components/SearchForm";
-import Pagination from "../../components/Pagination";
 import EmptyState from "../../components/EmptyState";
 import ErrorState from "../../components/ErrorState";
 import Loader from "../../components/Loader";
@@ -95,53 +94,53 @@ export default function McriapPage() {
   }, [sorting, pagination, columnFilters, router]);
 
   const columns: ColumnDef<Mcriap>[] = [
-    { accessorKey: "id", header: "ID", meta: { filter: "numberRange" } },
-    { accessorKey: "network", header: "Network", meta: { filter: "text" } },
-    { accessorKey: "agencyName", header: "Agency", meta: { filter: "text" } },
+    { accessorKey: "id", header: "ID", meta: { filterType: "numberRange" } },
+    { accessorKey: "network", header: "Network", meta: { filterType: "text" } },
+    { accessorKey: "agencyName", header: "Agency", meta: { filterType: "text" } },
     {
       accessorKey: "physicalAddress",
       header: "Address",
-      meta: { filter: "text" },
+      meta: { filterType: "text" },
     },
-    { accessorKey: "serviceName", header: "Service", meta: { filter: "text" } },
+    { accessorKey: "serviceName", header: "Service", meta: { filterType: "text" } },
     {
       accessorKey: "bandwidthKbps",
       header: "Bandwidth (Kbps)",
-      meta: { className: "text-right", filter: "numberRange" },
+      meta: { className: "text-right", filterType: "numberRange" },
     },
     {
       accessorKey: "tariffPlan",
       header: "Tariff Plan",
-      meta: { filter: "text" },
+      meta: { filterType: "text" },
     },
     {
       accessorKey: "connectionType",
       header: "Connection Type",
-      meta: { filter: "text" },
+      meta: { filterType: "text" },
     },
-    { accessorKey: "provider", header: "Provider", meta: { filter: "text" } },
-    { accessorKey: "region", header: "Region", meta: { filter: "text" } },
+    { accessorKey: "provider", header: "Provider", meta: { filterType: "text" } },
+    { accessorKey: "region", header: "Region", meta: { filterType: "text" } },
     {
       accessorKey: "externalId",
       header: "External ID",
-      meta: { filter: "text" },
+      meta: { filterType: "text" },
     },
     {
       accessorKey: "ipAddress",
       header: "IP Address",
-      meta: { filter: "text" },
+      meta: { filterType: "text" },
     },
-    { accessorKey: "p2pIp", header: "P2P IP", meta: { filter: "text" } },
-    { accessorKey: "manager", header: "Manager", meta: { filter: "text" } },
+    { accessorKey: "p2pIp", header: "P2P IP", meta: { filterType: "text" } },
+    { accessorKey: "manager", header: "Manager", meta: { filterType: "text" } },
     {
       accessorKey: "createdAt",
       header: "Created At",
-      meta: { filter: "dateRange" },
+      meta: { filterType: "dateRange" },
     },
     {
       accessorKey: "updatedAt",
       header: "Updated At",
-      meta: { filter: "dateRange" },
+      meta: { filterType: "dateRange" },
     },
   ];
 
@@ -216,9 +215,18 @@ export default function McriapPage() {
         <EmptyState />
       ) : (
         <>
-          <ChannelTable
+          <DataTable
             data={channels}
             columns={columns}
+            total={total}
+            page={pagination.pageIndex + 1}
+            perPage={pagination.pageSize}
+            onPageChange={(p) =>
+              setPagination((prev) => ({ ...prev, pageIndex: p - 1 }))
+            }
+            onPerPageChange={(pp) =>
+              setPagination({ pageIndex: 0, pageSize: pp })
+            }
             columnFilters={columnFilters}
             onColumnFiltersChange={(filters) => {
               setColumnFilters(filters);
@@ -257,17 +265,6 @@ export default function McriapPage() {
                   ? [{ id: field, desc: !cur[0].desc }]
                   : [{ id: field, desc: false }]
               )
-            }
-          />
-          <Pagination
-            page={pagination.pageIndex + 1}
-            perPage={pagination.pageSize}
-            total={total}
-            onPageChange={(p) =>
-              setPagination((prev) => ({ ...prev, pageIndex: p - 1 }))
-            }
-            onPerPageChange={(pp) =>
-              setPagination({ pageIndex: 0, pageSize: pp })
             }
           />
         </>
