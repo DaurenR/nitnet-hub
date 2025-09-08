@@ -42,10 +42,10 @@ export default function buildQuery({
       return;
     }
     if (filter.type === "dateRange") {
-      if (filter.from) {
+       if (filter.from?.trim()) {
         params.append(`f_${filter.column}From`, filter.from);
       }
-      if (filter.to) {
+      if (filter.to?.trim()) {
         params.append(`f_${filter.column}To`, filter.to);
       }
       return;
