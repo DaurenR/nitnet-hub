@@ -5,27 +5,22 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import React from "react";
+import type { ColumnFilter } from "../hooks/usePagedList";
 
-interface Column<T extends Record<string, unknown>> {
-  key: string;
-  label: string;
-  render?: (row: T) => React.ReactNode;
+interface Meta {
   className?: string;
-  filter?: React.ReactNode;
+  filter?: "text" | "numberRange" | "dateRange";
 }
 
 interface Props<T extends Record<string, unknown>> {
   data?: T[];
-  columns: Column<T>[];
+  columns: ColumnDef<T, unknown>[];
   sort?: string;
   order?: "asc" | "desc";
   onSort?: (field: string) => void;
   renderActions?: (row: T) => React.ReactNode;
-}
-
-interface Meta {
-  className?: string;
-  filter?: React.ReactNode;
+  columnFilters?: ColumnFilter[];
+  onColumnFiltersChange?: (filters: ColumnFilter[]) => void;
 }
 
 export default function ChannelTable<T extends Record<string, unknown>>({
@@ -35,27 +30,18 @@ export default function ChannelTable<T extends Record<string, unknown>>({
   order,
   onSort,
   renderActions,
+  columnFilters = [],
+  onColumnFiltersChange,
 }: Props<T>) {
   const columnDefs = React.useMemo(() => {
-    const defs: ColumnDef<T, unknown>[] = columns.map((col) => ({
-      accessorKey: String(col.key),
-      header: col.label,
-      cell: (info) =>
-        col.render
-          ? col.render(info.row.original)
-          : String(info.getValue() ?? ""),
-      meta: {
-        className: col.className,
-        filter: col.filter,
-      } as Meta,
-    }));
+    const defs: ColumnDef<T, unknown>[] = [...columns];
 
     if (renderActions) {
       defs.push({
         id: "__actions",
         header: "Actions",
         cell: (info) => renderActions(info.row.original),
-        meta: { className: "", filter: null } as Meta,
+        meta: { className: "" } as Meta,
       });
     }
 
@@ -81,6 +67,57 @@ export default function ChannelTable<T extends Record<string, unknown>>({
       }
     },
   });
+
+  const getFilter = (id: string) =>
+    columnFilters.find((f) => f.column === id);
+
+  const updateTextFilter = (id: string, value: string) => {
+    const next = columnFilters.filter((f) => f.column !== id);
+    if (value) next.push({ column: id, value, type: "text" });
+    onColumnFiltersChange?.(next);
+  };
+
+  const updateNumberRangeFilter = (
+    id: string,
+    part: "min" | "max",
+    value: string,
+  ) => {
+    const existing = getFilter(id);
+    const nextFilter =
+      existing && existing.type === "numberRange"
+        ? { ...existing }
+        : { column: id, type: "numberRange" as const };
+    if (part === "min") nextFilter.min = value;
+    else nextFilter.max = value;
+    if (!nextFilter.min) delete nextFilter.min;
+    if (!nextFilter.max) delete nextFilter.max;
+    const next = columnFilters.filter((f) => f.column !== id);
+    if (nextFilter.min !== undefined || nextFilter.max !== undefined) {
+      next.push(nextFilter);
+    }
+    onColumnFiltersChange?.(next);
+  };
+
+  const updateDateRangeFilter = (
+    id: string,
+    part: "from" | "to",
+    value: string,
+  ) => {
+    const existing = getFilter(id);
+    const nextFilter =
+      existing && existing.type === "dateRange"
+        ? { ...existing }
+        : { column: id, type: "dateRange" as const };
+    if (part === "from") nextFilter.from = value;
+    else nextFilter.to = value;
+    if (!nextFilter.from) delete nextFilter.from;
+    if (!nextFilter.to) delete nextFilter.to;
+    const next = columnFilters.filter((f) => f.column !== id);
+    if (nextFilter.from || nextFilter.to) {
+      next.push(nextFilter);
+    }
+    onColumnFiltersChange?.(next);
+  };
 
   return (
     <table className="w-full border-collapse border border-gray-300">
@@ -116,11 +153,116 @@ export default function ChannelTable<T extends Record<string, unknown>>({
               })}
             </tr>
             <tr>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id} className="border p-2">
-                  {(header.column.columnDef.meta as Meta)?.filter ?? null}
-                </th>
-              ))}
+               {headerGroup.headers.map((header) => {
+                const meta = header.column.columnDef.meta as Meta | undefined;
+                const filter = meta?.filter;
+                if (filter === "text") {
+                  const existing = getFilter(header.column.id);
+                  const val =
+                    existing &&
+                    existing.type !== "numberRange" &&
+                    existing.type !== "dateRange"
+                      ? (existing as { value: string | string[] | undefined })
+                          .value ?? ""
+                      : "";
+                  return (
+                    <th key={header.id} className="border p-2">
+                      <input
+                        className="w-full border p-1"
+                        value={val as string}
+                        onChange={(e) =>
+                          updateTextFilter(header.column.id, e.target.value)
+                        }
+                      />
+                    </th>
+                  );
+                }
+                if (filter === "numberRange") {
+                  const existing = getFilter(header.column.id);
+                  const min =
+                    existing && existing.type === "numberRange"
+                      ? existing.min ?? ""
+                      : "";
+                  const max =
+                    existing && existing.type === "numberRange"
+                      ? existing.max ?? ""
+                      : "";
+                  return (
+                    <th key={header.id} className="border p-2">
+                      <div className="flex flex-col">
+                        <input
+                          type="number"
+                          placeholder="Min"
+                          className="w-full border p-1 mb-1"
+                          value={min as string}
+                          onChange={(e) =>
+                            updateNumberRangeFilter(
+                              header.column.id,
+                              "min",
+                              e.target.value,
+                            )
+                          }
+                        />
+                        <input
+                          type="number"
+                          placeholder="Max"
+                          className="w-full border p-1"
+                          value={max as string}
+                          onChange={(e) =>
+                            updateNumberRangeFilter(
+                              header.column.id,
+                              "max",
+                              e.target.value,
+                            )
+                          }
+                        />
+                      </div>
+                    </th>
+                  );
+                }
+                if (filter === "dateRange") {
+                  const existing = getFilter(header.column.id);
+                  const from =
+                    existing && existing.type === "dateRange"
+                      ? existing.from ?? ""
+                      : "";
+                  const to =
+                    existing && existing.type === "dateRange"
+                      ? existing.to ?? ""
+                      : "";
+                  return (
+                    <th key={header.id} className="border p-2">
+                      <div className="flex flex-col">
+                        <input
+                          type="date"
+                          className="w-full border p-1 mb-1"
+                          value={from as string}
+                          onChange={(e) =>
+                            updateDateRangeFilter(
+                              header.column.id,
+                              "from",
+                              e.target.value,
+                            )
+                          }
+                        />
+                        <input
+                          type="date"
+                          className="w-full border p-1"
+                          value={to as string}
+                          onChange={(e) =>
+                            updateDateRangeFilter(
+                              header.column.id,
+                              "to",
+                              e.target.value,
+                            )
+                          }
+                        />
+                      </div>
+                    </th>
+                  );
+                }
+                return <th key={header.id} className="border p-2" />;
+              })}
             </tr>
           </React.Fragment>
         ))}

@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import type {
+  ColumnDef,
   PaginationState,
   SortingState,
 } from "@tanstack/react-table";
@@ -15,7 +16,7 @@ import { api, getRole } from "../../lib/api";
 import { Mcriap } from "../../types/mcriap";
 
 function parseFilters(
-  query: Record<string, string | string[] | undefined>,
+  query: Record<string, string | string[] | undefined>
 ): ColumnFilter[] {
   const map: Record<string, ColumnFilter> = {};
   Object.entries(query).forEach(([key, value]) => {
@@ -43,7 +44,11 @@ function parseFilters(
       return;
     }
     const col = raw;
-    const filter = (map[col] = map[col] || { column: col, value: [] });
+    const filter = (map[col] = map[col] || {
+      column: col,
+      value: [],
+      type: "text",
+    });
     const arr = Array.isArray(value) ? value : [value];
     filter.value = Array.isArray(filter.value)
       ? [...(filter.value as string[]), ...arr]
@@ -51,7 +56,6 @@ function parseFilters(
   });
   return Object.values(map);
 }
-
 
 export default function McriapPage() {
   const router = useRouter();
@@ -64,9 +68,9 @@ export default function McriapPage() {
   };
   const getString = (v: string | string[] | undefined) =>
     Array.isArray(v) ? v[0] : v;
-    const q = getString(router.query.q);
+  const q = getString(router.query.q);
 
-    const [sorting, setSorting] = useState<SortingState>(() => {
+  const [sorting, setSorting] = useState<SortingState>(() => {
     const sort = getString(router.query.sort);
     const order = getString(router.query.order);
     return sort ? [{ id: sort, desc: order === "desc" }] : [];
@@ -76,7 +80,7 @@ export default function McriapPage() {
     pageSize: getNumber(router.query.perPage, 10),
   }));
   const [columnFilters, setColumnFilters] = useState<ColumnFilter[]>(() =>
-    parseFilters(router.query),
+    parseFilters(router.query)
   );
 
   useEffect(() => {
@@ -92,7 +96,7 @@ export default function McriapPage() {
     setColumnFilters(parseFilters(router.query));
   }, [router.query]);
 
-useEffect(() => {
+  useEffect(() => {
     const query: Record<string, string | string[] | undefined> = {
       ...router.query,
     };
@@ -125,46 +129,76 @@ useEffect(() => {
       if (val === undefined || val === "") return;
       query[`f_${f.column}`] = Array.isArray(val) ? val : String(val);
     });
-      router.replace({ pathname: router.pathname, query }, undefined, {
+    router.replace({ pathname: router.pathname, query }, undefined, {
       shallow: true,
     });
   }, [sorting, pagination, columnFilters, router]);
 
-  const columns = [
-    { key: "id", label: "ID" },
-    { key: "network", label: "Network" },
-    { key: "agencyName", label: "Agency" },
-    { key: "physicalAddress", label: "Address" },
-    { key: "serviceName", label: "Service" },
+  const columns: ColumnDef<Mcriap>[] = [
+    { accessorKey: "id", header: "ID", meta: { filter: "numberRange" } },
+    { accessorKey: "network", header: "Network", meta: { filter: "text" } },
+    { accessorKey: "agencyName", header: "Agency", meta: { filter: "text" } },
     {
-      key: "bandwidthKbps",
-      label: "Bandwidth (Kbps)",
-      className: "text-right",
+      accessorKey: "physicalAddress",
+      header: "Address",
+      meta: { filter: "text" },
     },
-    { key: "tariffPlan", label: "Tariff Plan" },
-    { key: "connectionType", label: "Connection Type" },
-    { key: "provider", label: "Provider" },
-    { key: "region", label: "Region" },
-    { key: "externalId", label: "External ID" },
-    { key: "ipAddress", label: "IP Address" },
-    { key: "p2pIp", label: "P2P IP" },
-    { key: "manager", label: "Manager" },
-    { key: "createdAt", label: "Created At" },
-    { key: "updatedAt", label: "Updated At" },
+    { accessorKey: "serviceName", header: "Service", meta: { filter: "text" } },
+    {
+      accessorKey: "bandwidthKbps",
+      header: "Bandwidth (Kbps)",
+      meta: { className: "text-right", filter: "numberRange" },
+    },
+    {
+      accessorKey: "tariffPlan",
+      header: "Tariff Plan",
+      meta: { filter: "text" },
+    },
+    {
+      accessorKey: "connectionType",
+      header: "Connection Type",
+      meta: { filter: "text" },
+    },
+    { accessorKey: "provider", header: "Provider", meta: { filter: "text" } },
+    { accessorKey: "region", header: "Region", meta: { filter: "text" } },
+    {
+      accessorKey: "externalId",
+      header: "External ID",
+      meta: { filter: "text" },
+    },
+    {
+      accessorKey: "ipAddress",
+      header: "IP Address",
+      meta: { filter: "text" },
+    },
+    { accessorKey: "p2pIp", header: "P2P IP", meta: { filter: "text" } },
+    { accessorKey: "manager", header: "Manager", meta: { filter: "text" } },
+    {
+      accessorKey: "createdAt",
+      header: "Created At",
+      meta: { filter: "dateRange" },
+    },
+    {
+      accessorKey: "updatedAt",
+      header: "Updated At",
+      meta: { filter: "dateRange" },
+    },
   ];
 
-  const { data: channels, total, isLoading, error } = usePagedList<Mcriap>(
-    "mcriap",
-    {
-      page: pagination.pageIndex + 1,
-      perPage: pagination.pageSize,
-      sort: sorting[0]?.id as string | undefined,
-      order: sorting[0]?.desc ? "desc" : undefined,
-      q,
-      refresh,
-      columnFilters,
-    },
-  );
+  const {
+    data: channels,
+    total,
+    isLoading,
+    error,
+  } = usePagedList<Mcriap>("mcriap", {
+    page: pagination.pageIndex + 1,
+    perPage: pagination.pageSize,
+    sort: sorting[0]?.id as string | undefined,
+    order: sorting[0]?.desc ? "desc" : undefined,
+    q,
+    refresh,
+    columnFilters,
+  });
 
   const handleSearch = (values: Record<string, string>) => {
     router.replace(
@@ -173,7 +207,7 @@ useEffect(() => {
         query: { ...router.query, q: values.q, page: "1" },
       },
       undefined,
-      { shallow: true },
+      { shallow: true }
     );
   };
 
@@ -225,6 +259,11 @@ useEffect(() => {
           <ChannelTable
             data={channels}
             columns={columns}
+            columnFilters={columnFilters}
+            onColumnFiltersChange={(filters) => {
+              setColumnFilters(filters);
+              setPagination((p) => ({ ...p, pageIndex: 0 }));
+            }}
             renderActions={
               role === "manager"
                 ? (row) => (
@@ -256,7 +295,7 @@ useEffect(() => {
               setSorting((cur) =>
                 cur[0]?.id === field
                   ? [{ id: field, desc: !cur[0].desc }]
-                  : [{ id: field, desc: false }],
+                  : [{ id: field, desc: false }]
               )
             }
           />

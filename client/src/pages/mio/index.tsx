@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import type {
+  ColumnDef,
   PaginationState,
   SortingState,
 } from "@tanstack/react-table";
@@ -16,7 +17,7 @@ import { MioChannel } from "../../types/mio";
 
 // Parse column filters from query parameters with prefix `f_`
 function parseFilters(
-  query: Record<string, string | string[] | undefined>,
+  query: Record<string, string | string[] | undefined>
 ): ColumnFilter[] {
   const map: Record<string, ColumnFilter> = {};
   Object.entries(query).forEach(([key, value]) => {
@@ -44,7 +45,11 @@ function parseFilters(
       return;
     }
     const col = raw;
-    const filter = (map[col] = map[col] || { column: col, value: [] });
+    const filter = (map[col] = map[col] || {
+      column: col,
+      value: [],
+      type: "text",
+    });
     const arr = Array.isArray(value) ? value : [value];
     filter.value = Array.isArray(filter.value)
       ? [...(filter.value as string[]), ...arr]
@@ -64,20 +69,20 @@ export default function MioPage() {
   };
   const getString = (v: string | string[] | undefined) =>
     Array.isArray(v) ? v[0] : v;
-  
+
   const q = getString(router.query.q);
 
   const [sorting, setSorting] = useState<SortingState>(() => {
     const sort = getString(router.query.sort);
     const order = getString(router.query.order);
     return sort ? [{ id: sort, desc: order === "desc" }] : [];
-    });
+  });
   const [pagination, setPagination] = useState<PaginationState>(() => ({
     pageIndex: getNumber(router.query.page, 1) - 1,
     pageSize: getNumber(router.query.perPage, 10),
   }));
   const [columnFilters, setColumnFilters] = useState<ColumnFilter[]>(() =>
-    parseFilters(router.query),
+    parseFilters(router.query)
   );
 
   // Sync state with query changes
@@ -94,7 +99,7 @@ export default function MioPage() {
     setColumnFilters(parseFilters(router.query));
   }, [router.query]);
 
-   // Sync query with state
+  // Sync query with state
   useEffect(() => {
     const query: Record<string, string | string[] | undefined> = {
       ...router.query,
@@ -128,46 +133,60 @@ export default function MioPage() {
       if (val === undefined || val === "") return;
       query[`f_${f.column}`] = Array.isArray(val) ? val : String(val);
     });
-     router.replace({ pathname: router.pathname, query }, undefined, {
+    router.replace({ pathname: router.pathname, query }, undefined, {
       shallow: true,
     });
   }, [sorting, pagination, columnFilters, router]);
 
-  const columns = [
-    { key: "id", label: "ID" },
-    { key: "repOfficeName", label: "Rep Office" },
-    { key: "clientName", label: "Client" },
-    { key: "endUser", label: "End User" },
-    { key: "physicalAddress", label: "Address" },
-    { key: "serviceName", label: "Service" },
+  const columns: ColumnDef<MioChannel>[] = [
+    { accessorKey: "id", header: "ID", meta: { filter: "numberRange" } },
     {
-      key: "bandwidthKbps",
-      label: "Bandwidth (Kbps)",
-      className: "text-right",
+      accessorKey: "repOfficeName",
+      header: "Rep Office",
+      meta: { filter: "text" },
     },
-    { key: "tariffPlan", label: "Tariff Plan" },
-    { key: "connectionType", label: "Connection Type" },
-    { key: "provider", label: "Provider" },
-    { key: "providerId", label: "Provider ID" },
-    { key: "ipAddress", label: "IP Address" },
-    { key: "p2pIp", label: "P2P IP" },
-    { key: "manager", label: "Manager" },
-    { key: "createdAt", label: "Created At" },
-    { key: "updatedAt", label: "Updated At" },
+    { accessorKey: "clientName", header: "Client", meta: { filter: "text" } },
+    { accessorKey: "endUser", header: "End User", meta: { filter: "text" } },
+    {
+      accessorKey: "physicalAddress",
+      header: "Address",
+      meta: { filter: "text" },
+    },
+    { accessorKey: "serviceName", header: "Service", meta: { filter: "text" } },
+    {
+      accessorKey: "bandwidthKbps",
+      header: "Bandwidth (Kbps)",
+      meta: { className: "text-right", filter: "numberRange" },
+    },
+    { accessorKey: "tariffPlan", header: "Tariff Plan", meta: { filter: "text" } },
+    {
+      accessorKey: "connectionType",
+      header: "Connection Type",
+      meta: { filter: "text" },
+    },
+    { accessorKey: "provider", header: "Provider", meta: { filter: "text" } },
+    { accessorKey: "providerId", header: "Provider ID", meta: { filter: "text" } },
+    { accessorKey: "ipAddress", header: "IP Address", meta: { filter: "text" } },
+    { accessorKey: "p2pIp", header: "P2P IP", meta: { filter: "text" } },
+    { accessorKey: "manager", header: "Manager", meta: { filter: "text" } },
+    { accessorKey: "createdAt", header: "Created At", meta: { filter: "dateRange" } },
+    { accessorKey: "updatedAt", header: "Updated At", meta: { filter: "dateRange" } },
   ];
 
-   const { data: channels, total, isLoading, error } = usePagedList<MioChannel>(
-    "mio",
-    {
-      page: pagination.pageIndex + 1,
-      perPage: pagination.pageSize,
-      sort: sorting[0]?.id as string | undefined,
-      order: sorting[0]?.desc ? "desc" : undefined,
-      q,
-      refresh,
-      columnFilters,
-    },
-  );
+  const {
+    data: channels,
+    total,
+    isLoading,
+    error,
+  } = usePagedList<MioChannel>("mio", {
+    page: pagination.pageIndex + 1,
+    perPage: pagination.pageSize,
+    sort: sorting[0]?.id as string | undefined,
+    order: sorting[0]?.desc ? "desc" : undefined,
+    q,
+    refresh,
+    columnFilters,
+  });
 
   const handleSearch = (values: Record<string, string>) => {
     router.replace(
@@ -176,7 +195,7 @@ export default function MioPage() {
         query: { ...router.query, q: values.q, page: "1" },
       },
       undefined,
-      { shallow: true },
+      { shallow: true }
     );
   };
 
@@ -190,7 +209,7 @@ export default function MioPage() {
       return;
     }
     if (res.ok) {
-       if (channels.length === 1 && pagination.pageIndex > 0) {
+      if (channels.length === 1 && pagination.pageIndex > 0) {
         setPagination((p) => ({ ...p, pageIndex: p.pageIndex - 1 }));
       } else {
         setRefresh((r) => r + 1);
@@ -228,6 +247,11 @@ export default function MioPage() {
           <ChannelTable
             data={channels}
             columns={columns}
+            columnFilters={columnFilters}
+            onColumnFiltersChange={(filters) => {
+              setColumnFilters(filters);
+              setPagination((p) => ({ ...p, pageIndex: 0 }));
+            }}
             renderActions={
               role === "manager"
                 ? (row) => (
@@ -259,7 +283,7 @@ export default function MioPage() {
               setSorting((cur) =>
                 cur[0]?.id === field
                   ? [{ id: field, desc: !cur[0].desc }]
-                  : [{ id: field, desc: false }],
+                  : [{ id: field, desc: false }]
               )
             }
           />
@@ -267,7 +291,7 @@ export default function MioPage() {
             page={pagination.pageIndex + 1}
             perPage={pagination.pageSize}
             total={total}
-             onPageChange={(p) =>
+            onPageChange={(p) =>
               setPagination((prev) => ({ ...prev, pageIndex: p - 1 }))
             }
             onPerPageChange={(pp) =>
