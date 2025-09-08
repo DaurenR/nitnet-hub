@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import type { ColumnFilter } from "../features/table/types";
 
-export type { ColumnFilter };
-
 export interface PagedListParams {
   page?: number;
   perPage?: number;

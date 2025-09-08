@@ -5,7 +5,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import React from "react";
-import type { ColumnFilter } from "../hooks/usePagedList";
+import type { ColumnFilter } from "../features/table/types";
 
 interface Meta {
   className?: string;
