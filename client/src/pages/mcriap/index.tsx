@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useRouter } from "next/router";
 import type { ColumnDef } from "@tanstack/react-table";
 import DataTable from "../../features/table/DataTable";
@@ -20,7 +21,10 @@ export default function McriapPage() {
   const q = getString(router.query.q);
   const sort = getString(router.query.sort);
   const order = getString(router.query.order);
-  const columnFilters = parseFilters(router.query);
+ const columnFilters = useMemo(
+    () => parseFilters(router.query),
+    [router.query],
+  );
 
   const { data: channels, total, page, perPage, isLoading, error } =
     usePagedList<Mcriap>("/mcriap");

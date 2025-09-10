@@ -5,6 +5,24 @@ import type {
   TextFilter,
 } from "./types.ts";
 
+const stableStringify = (obj: unknown): string => {
+  if (Array.isArray(obj)) {
+    return `[${obj.map((v) => stableStringify(v)).join(",")}]`;
+  }
+  if (obj && typeof obj === "object") {
+    return `{${Object.keys(obj)
+      .sort()
+      .map((key) => {
+        const value = (obj as Record<string, unknown>)[key];
+        if (value === undefined) return "";
+        return `${JSON.stringify(key)}:${stableStringify(value)}`;
+      })
+      .filter(Boolean)
+      .join(",")}}`;
+  }
+  return JSON.stringify(obj);
+};
+
 const first = (v: unknown): string | undefined => {
   const raw = Array.isArray(v) ? v[0] : v;
   return raw === "" || raw == null ? undefined : String(raw);
@@ -17,9 +35,14 @@ const toNum = (v: unknown): number | undefined => {
   return Number.isFinite(n) ? n : undefined;
 };
 
+let cachedQueryStr: string | undefined;
+let cachedFilters: ColumnFilter[] | undefined;
+
 export default function parseFilters(
   query: Record<string, string | string[] | undefined>
 ): ColumnFilter[] {
+  const queryStr = stableStringify(query);
+  if (cachedQueryStr === queryStr && cachedFilters) return cachedFilters;
   const map: Record<string, ColumnFilter> = {};
 
   Object.entries(query).forEach(([key, value]) => {
@@ -65,5 +88,8 @@ export default function parseFilters(
     }
   });
 
-  return Object.values(map);
+  const filters = Object.values(map);
+  cachedQueryStr = queryStr;
+  cachedFilters = filters;
+  return filters;
 }
