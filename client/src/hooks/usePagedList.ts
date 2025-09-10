@@ -3,6 +3,24 @@ import { useRouter } from "next/router";
 import { api } from "../lib/api";
 import buildQuery from "../features/table/buildQuery";
 
+const stableStringify = (obj: unknown): string => {
+  if (Array.isArray(obj)) {
+    return `[${obj.map((v) => stableStringify(v)).join(",")}]`;
+  }
+  if (obj && typeof obj === "object") {
+    return `{${Object.keys(obj)
+      .sort()
+      .map((key) => {
+        const value = (obj as Record<string, unknown>)[key];
+        if (value === undefined) return "";
+        return `${JSON.stringify(key)}:${stableStringify(value)}`;
+      })
+      .filter(Boolean)
+      .join(",")}}`;
+  }
+  return JSON.stringify(obj);
+};
+
 export interface PagedListResult<T> {
   data: T[];
   total: number;
@@ -16,6 +34,8 @@ export default function usePagedList<T>(
   endpoint: "/mcriap" | "/mio",
 ): PagedListResult<T> {
   const router = useRouter();
+  const queryStrRef = useRef(stableStringify(router.query));
+  const [queryStr, setQueryStr] = useState(queryStrRef.current);
   const [data, setData] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,25 +66,32 @@ export default function usePagedList<T>(
     order?: string;
     filters: string;
   }>({ q, sort, order, filters: "" });
-  const queryString = JSON.stringify(router.query);
   useEffect(() => {
     const prev = prevRef.current;
-    if (
+     const shouldReset =
       prev &&
       (prev.q !== q ||
         prev.sort !== sort ||
         prev.order !== order ||
         prev.filters !== filtersStr) &&
-      page !== 1
-    ) {
-      router.replace(
-        { pathname: router.pathname, query: { ...router.query, page: "1" } },
-        undefined,
-        { shallow: true },
-      );
+      page !== 1;
+
+    const nextQuery = shouldReset ? { ...router.query, page: "1" } : router.query;
+    const nextQueryStr = stableStringify(nextQuery);
+
+    if (queryStrRef.current !== nextQueryStr) {
+      if (shouldReset) {
+        router.replace(
+          { pathname: router.pathname, query: nextQuery },
+          undefined,
+          { shallow: true },
+        );
+      }
+      queryStrRef.current = nextQueryStr;
+      setQueryStr(nextQueryStr);
     }
     prevRef.current = { q, sort, order, filters: filtersStr };
-  }, [q, sort, order, filtersStr, page, router, queryString]);
+  }, [q, sort, order, filtersStr, page, perPage, router]);
 
   useEffect(() => {
     const page = getNumber(router.query.page, 1);
@@ -126,7 +153,7 @@ export default function usePagedList<T>(
     return () => {
       controller.abort();
     };
-  }, [endpoint, queryString, router]);
+  }, [endpoint, queryStr, router]);
 
  return { data, total, page, perPage, isLoading, error };
 }
