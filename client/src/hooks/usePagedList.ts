@@ -123,7 +123,6 @@ export default function usePagedList<T>(
 
     const controller = new AbortController();
     setIsLoading(true);
-    setError(null);
 
     api(`${endpoint}?${params.toString()}`, { signal: controller.signal })
       .then((res) => {
@@ -139,11 +138,10 @@ export default function usePagedList<T>(
       .then((json) => {
         setData(Array.isArray(json.data) ? json.data : []);
         setTotal(typeof json.total === "number" ? json.total : 0);
+        setError(null);
       })
       .catch((err) => {
         if (err.name === "AbortError") return;
-        setData([]);
-        setTotal(0);
         setError(err instanceof Error ? err : new Error(String(err)));
       })
       .finally(() => {
