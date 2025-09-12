@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { ColumnFilter } from "./types";
 
 interface Props {
@@ -14,6 +14,8 @@ export default function ColumnFilter({
   columnFilters,
   onChange,
 }: Props) {
+  const [text, setText] = useState("");
+  const timer = useRef<ReturnType<typeof setTimeout>>();
   const getFilter = (col: string) =>
     columnFilters.find((f) => f.column === col);
 
@@ -62,15 +64,28 @@ export default function ColumnFilter({
     onChange?.(next);
   };
 
-  if (filterType === "text") {
-    const existing = getFilter(id);
+  useEffect(() => {
+    const existing = columnFilters.find((f) => f.column === id);
     const val =
       existing && existing.type === "text" ? existing.value ?? "" : "";
+       setText(val as string);
+  }, [columnFilters, id, filterType]);
+
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
+  if (filterType === "text") {
     return (
       <input
         className="w-full border p-1"
-        value={val as string}
-        onChange={(e) => updateTextFilter(e.target.value)}
+         value={text}
+        onChange={(e) => {
+          const value = e.target.value;
+          setText(value);
+          if (timer.current) clearTimeout(timer.current);
+          timer.current = setTimeout(() => updateTextFilter(value), 350);
+        }}
       />
     );
   }
