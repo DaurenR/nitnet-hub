@@ -15,7 +15,7 @@ export default function ColumnFilter({
   onChange,
 }: Props) {
   const [text, setText] = useState("");
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const getFilter = (col: string) =>
     columnFilters.find((f) => f.column === col);
 

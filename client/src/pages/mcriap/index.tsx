@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter } from "next/router";
 import type { ColumnDef } from "@tanstack/react-table";
 import DataTable from "../../features/table/DataTable";
@@ -11,6 +11,7 @@ import { api, getRole } from "../../lib/api";
 import { Mcriap } from "../../types/mcriap";
 import parseFilters from "../../features/table/parseFilters";
 import buildQuery, { BuildQueryParams } from "../../features/table/buildQuery";
+import type { ColumnFilter } from "../../features/table/types";
 
 export default function McriapPage() {
   const router = useRouter();
@@ -29,95 +30,136 @@ export default function McriapPage() {
   const { data: channels, total, page, perPage, isLoading, error } =
     usePagedList<Mcriap>("/mcriap");
 
-  const update = (params: BuildQueryParams) => {
-    const qs = buildQuery({
-      page,
-      perPage,
-      sort,
-      order,
-      q,
-      columnFilters,
-      ...params,
-    });
-    router.replace(
-      { pathname: router.pathname, query: Object.fromEntries(qs.entries()) },
-      undefined,
-      { shallow: true },
-    );
-  };
+  const update = useCallback(
+    (params: BuildQueryParams) => {
+      const qs = buildQuery({
+        page,
+        perPage,
+        sort,
+        order,
+        q,
+        columnFilters,
+        ...params,
+      });
+      router.replace(
+        { pathname: router.pathname, query: Object.fromEntries(qs.entries()) },
+        undefined,
+        { shallow: true },
+      );
+    },
+    [page, perPage, sort, order, q, columnFilters, router],
+  );
 
-  const columns: ColumnDef<Mcriap>[] = [
-    { accessorKey: "id", header: "ID", meta: { filterType: "numberRange" } },
-    { accessorKey: "network", header: "Network", meta: { filterType: "text" } },
-    { accessorKey: "agencyName", header: "Agency", meta: { filterType: "text" } },
-    {
-      accessorKey: "physicalAddress",
-      header: "Address",
-      meta: { filterType: "text" },
-    },
-    { accessorKey: "serviceName", header: "Service", meta: { filterType: "text" } },
-    {
-      accessorKey: "bandwidthKbps",
-      header: "Bandwidth (Kbps)",
-      meta: { className: "text-right", filterType: "numberRange" },
-    },
-    {
-      accessorKey: "tariffPlan",
-      header: "Tariff Plan",
-      meta: { filterType: "text" },
-    },
-    {
-      accessorKey: "connectionType",
-      header: "Connection Type",
-      meta: { filterType: "text" },
-    },
-    { accessorKey: "provider", header: "Provider", meta: { filterType: "text" } },
-    { accessorKey: "region", header: "Region", meta: { filterType: "text" } },
-    {
-      accessorKey: "externalId",
-      header: "External ID",
-      meta: { filterType: "text" },
-    },
-    {
-      accessorKey: "ipAddress",
-      header: "IP Address",
-      meta: { filterType: "text" },
-    },
-    { accessorKey: "p2pIp", header: "P2P IP", meta: { filterType: "text" } },
-    { accessorKey: "manager", header: "Manager", meta: { filterType: "text" } },
-    {
-      accessorKey: "createdAt",
-      header: "Created At",
-      meta: { filterType: "dateRange" },
-    },
-    {
-      accessorKey: "updatedAt",
-      header: "Updated At",
-      meta: { filterType: "dateRange" },
-    },
-  ];
+  const columns = useMemo<ColumnDef<Mcriap>[]>(
+    () => [
+      { accessorKey: "id", header: "ID", meta: { filterType: "numberRange" } },
+      { accessorKey: "network", header: "Network", meta: { filterType: "text" } },
+      { accessorKey: "agencyName", header: "Agency", meta: { filterType: "text" } },
+      {
+        accessorKey: "physicalAddress",
+        header: "Address",
+        meta: { filterType: "text" },
+      },
+      { accessorKey: "serviceName", header: "Service", meta: { filterType: "text" } },
+      {
+        accessorKey: "bandwidthKbps",
+        header: "Bandwidth (Kbps)",
+        meta: { className: "text-right", filterType: "numberRange" },
+      },
+      {
+        accessorKey: "tariffPlan",
+        header: "Tariff Plan",
+        meta: { filterType: "text" },
+      },
+      {
+        accessorKey: "connectionType",
+        header: "Connection Type",
+        meta: { filterType: "text" },
+      },
+      { accessorKey: "provider", header: "Provider", meta: { filterType: "text" } },
+      { accessorKey: "region", header: "Region", meta: { filterType: "text" } },
+      {
+        accessorKey: "externalId",
+        header: "External ID",
+        meta: { filterType: "text" },
+      },
+      {
+        accessorKey: "ipAddress",
+        header: "IP Address",
+        meta: { filterType: "text" },
+      },
+      { accessorKey: "p2pIp", header: "P2P IP", meta: { filterType: "text" } },
+      { accessorKey: "manager", header: "Manager", meta: { filterType: "text" } },
+      {
+        accessorKey: "createdAt",
+        header: "Created At",
+        meta: { filterType: "dateRange" },
+      },
+      {
+        accessorKey: "updatedAt",
+        header: "Updated At",
+        meta: { filterType: "dateRange" },
+      },
+    ],
+    [],
+  );
 
-  const handleSearch = (values: Record<string, string>) => {
-    update({ q: values.q });
-  };
+  const handleSearch = useCallback(
+    (values: Record<string, string>) => {
+      update({ q: values.q });
+    },
+     [update],
+  );
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Delete?")) return;
-    const res = await api(`/mcriap/${id}`, {
-      method: "DELETE",
-    });
-    if (res.status === 403) {
-      alert("Forbidden");
-      return;
-    }
-    if (res.ok) {
-       if (channels.length === 1 && page > 1) {
-        update({ page: page - 1 });
-      } else {
-        update({ refresh: Date.now() });
+  const handleDelete = useCallback(
+    async (id: number) => {
+      if (!confirm("Delete?")) return;
+      const res = await api(`/mcriap/${id}`, {
+        method: "DELETE",
+      });
+      if (res.status === 403) {
+        alert("Forbidden");
+        return;
       }
-    }
-  };
+      if (res.ok) {
+        if (channels.length === 1 && page > 1) {
+          update({ page: page - 1 });
+        } else {
+          update({ refresh: Date.now() });
+        }
+      }
+    },
+     [channels, page, update],
+  );
+
+  const handlePageChange = useCallback(
+    (p: number) => {
+      update({ page: p });
+    },
+    [update],
+  );
+
+  const handlePerPageChange = useCallback(
+    (pp: number) => {
+      update({ perPage: pp, page: 1 });
+    },
+ [update],
+  );
+
+  const handleColumnFiltersChange = useCallback(
+    (filters: ColumnFilter[]) => {
+      update({ columnFilters: filters });
+    },
+    [update],
+  );
+
+  const handleSort = useCallback(
+    (field: string) => {
+      const nextOrder = sort === field && order !== "desc" ? "desc" : "asc";
+      update({ sort: field, order: nextOrder });
+    },
+    [sort, order, update],
+  );
 
   return (
     <div className="p-8">
@@ -152,10 +194,10 @@ export default function McriapPage() {
             total={total}
             page={page}
             perPage={perPage}
-            onPageChange={(p) => update({ page: p })}
-            onPerPageChange={(pp) => update({ perPage: pp, page: 1 })}
+            onPageChange={handlePageChange}
+            onPerPageChange={handlePerPageChange}
             columnFilters={columnFilters}
-            onColumnFiltersChange={(filters) => update({ columnFilters: filters })}
+            onColumnFiltersChange={handleColumnFiltersChange}
             renderActions={
               role === "manager"
                 ? (row) => (
@@ -183,11 +225,7 @@ export default function McriapPage() {
             }
             sort={sort as string | undefined}
             order={sort ? (order === "desc" ? "desc" : "asc") : undefined}
-            onSort={(field) => {
-              const nextOrder =
-                sort === field && order !== "desc" ? "desc" : "asc";
-              update({ sort: field, order: nextOrder });
-            }}
+            onSort={handleSort}
           />
         </>
       )}
