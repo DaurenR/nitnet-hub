@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { api } from "../lib/api";
 import buildQuery, { stableStringify } from "../features/table/buildQuery";
@@ -13,11 +13,12 @@ export interface PagedListResult<T> {
 }
 
 export default function usePagedList<T>(
-  endpoint: "/mcriap" | "/mio",
+  endpoint: "/mcriap" | "/mio"
 ): PagedListResult<T> {
   const router = useRouter();
-  const queryStrRef = useRef(stableStringify(router.query));
-  const [queryStr, setQueryStr] = useState(queryStrRef.current);
+  const [currentQuery, setCurrentQuery] = useState<
+    Record<string, string | string[] | undefined>
+  >(() => ({ ...router.query }));
   const [data, setData] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,15 +31,30 @@ export default function usePagedList<T>(
   const getString = (v: string | string[] | undefined) =>
     Array.isArray(v) ? v[0] : v;
 
-  const page = getNumber(router.query.page, 1);
-  const perPage = getNumber(router.query.perPage, 10);
-  const sort = getString(router.query.sort);
-  const order = getString(router.query.order);
-  const q = getString(router.query.q);
+  const routerQueryStr = useMemo(
+    () => stableStringify(router.query),
+    [router.query]
+  );
+
+  useEffect(() => {
+    setCurrentQuery((prevQuery) => {
+      const prevStr = stableStringify(prevQuery);
+      if (prevStr === routerQueryStr) {
+        return prevQuery;
+      }
+      return { ...router.query };
+    });
+  }, [router, routerQueryStr]);
+
+  const page = getNumber(currentQuery.page, 1);
+  const perPage = getNumber(currentQuery.perPage, 10);
+  const sort = getString(currentQuery.sort);
+  const order = getString(currentQuery.order);
+  const q = getString(currentQuery.q);
   const filtersStr = stableStringify(
     Object.fromEntries(
-      Object.entries(router.query).filter(([key]) => key.startsWith("f_")),
-    ),
+      Object.entries(currentQuery).filter(([key]) => key.startsWith("f_"))
+    )
   );
 
   // Reset page to 1 when q, sort or filters change
@@ -47,10 +63,10 @@ export default function usePagedList<T>(
     sort?: string;
     order?: string;
     filters: string;
-  }>({ q, sort, order, filters: "" });
+  }>({ q, sort, order, filters: filtersStr });
   useEffect(() => {
     const prev = prevRef.current;
-     const shouldReset =
+    const shouldReset =
       prev &&
       (prev.q !== q ||
         prev.sort !== sort ||
@@ -58,31 +74,22 @@ export default function usePagedList<T>(
         prev.filters !== filtersStr) &&
       page !== 1;
 
-    const nextQuery = shouldReset ? { ...router.query, page: "1" } : router.query;
-    const nextQueryStr = stableStringify(nextQuery);
-
-    if (queryStrRef.current !== nextQueryStr) {
-      if (shouldReset) {
-        router.replace(
-          { pathname: router.pathname, query: nextQuery },
-          undefined,
-          { shallow: true },
-        );
-      }
-      queryStrRef.current = nextQueryStr;
-      setQueryStr(nextQueryStr);
+    if (shouldReset) {
+      const nextQuery = { ...currentQuery, page: "1" };
+      setCurrentQuery(nextQuery);
+      router.replace(
+        { pathname: router.pathname, query: nextQuery },
+        undefined,
+        { shallow: true }
+      );
     }
+
     prevRef.current = { q, sort, order, filters: filtersStr };
-  }, [q, sort, order, filtersStr, page, perPage, router]);
+  }, [currentQuery, filtersStr, page, q, router, sort, order]);
 
   useEffect(() => {
-    const page = getNumber(router.query.page, 1);
-    const perPage = getNumber(router.query.perPage, 10);
-    const sort = getString(router.query.sort);
-    const order = getString(router.query.order);
-    const q = getString(router.query.q);
     const rest: Record<string, string | string[] | undefined> = {
-      ...router.query,
+      ...currentQuery,
     };
     delete rest.page;
     delete rest.perPage;
@@ -133,7 +140,7 @@ export default function usePagedList<T>(
     return () => {
       controller.abort();
     };
-  }, [endpoint, queryStr, router]);
+  }, [currentQuery, endpoint, order, page, perPage, q, sort]);
 
- return { data, total, page, perPage, isLoading, error };
+  return { data, total, page, perPage, isLoading, error };
 }
