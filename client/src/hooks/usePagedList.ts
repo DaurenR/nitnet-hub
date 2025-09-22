@@ -1,25 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { api } from "../lib/api";
-import buildQuery from "../features/table/buildQuery";
-
-const stableStringify = (obj: unknown): string => {
-  if (Array.isArray(obj)) {
-    return `[${obj.map((v) => stableStringify(v)).join(",")}]`;
-  }
-  if (obj && typeof obj === "object") {
-    return `{${Object.keys(obj)
-      .sort()
-      .map((key) => {
-        const value = (obj as Record<string, unknown>)[key];
-        if (value === undefined) return "";
-        return `${JSON.stringify(key)}:${stableStringify(value)}`;
-      })
-      .filter(Boolean)
-      .join(",")}}`;
-  }
-  return JSON.stringify(obj);
-};
+import buildQuery, { stableStringify } from "../features/table/buildQuery";
 
 export interface PagedListResult<T> {
   data: T[];
@@ -53,7 +35,7 @@ export default function usePagedList<T>(
   const sort = getString(router.query.sort);
   const order = getString(router.query.order);
   const q = getString(router.query.q);
-  const filtersStr = JSON.stringify(
+  const filtersStr = stableStringify(
     Object.fromEntries(
       Object.entries(router.query).filter(([key]) => key.startsWith("f_")),
     ),
