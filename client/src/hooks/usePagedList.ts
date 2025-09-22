@@ -77,6 +77,24 @@ export default function usePagedList<T>(
     if (shouldReset) {
       const nextQuery = { ...currentQuery, page: "1" };
       setCurrentQuery(nextQuery);
+      if (process.env.NODE_ENV !== "production") {
+        const searchParams = new URLSearchParams();
+        Object.entries(nextQuery).forEach(([key, value]) => {
+          if (typeof value === "undefined") {
+            return;
+          }
+          if (Array.isArray(value)) {
+            value.forEach((item) => searchParams.append(key, item));
+            return;
+          }
+          searchParams.append(key, value);
+        });
+        const queryString = searchParams.toString();
+        const nextUrl = `${router.pathname}${
+          queryString ? `?${queryString}` : ""
+        }`;
+        console.debug("[usePagedList] router.replace", nextUrl);
+      }
       router.replace(
         { pathname: router.pathname, query: nextQuery },
         undefined,
@@ -113,7 +131,12 @@ export default function usePagedList<T>(
     const controller = new AbortController();
     setIsLoading(true);
 
-    api(`${endpoint}?${params.toString()}`, { signal: controller.signal })
+    const requestUrl = `${endpoint}?${params.toString()}`;
+    const requestStartedAt = Date.now();
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[usePagedList] api start", requestUrl);
+    }
+    api(requestUrl, { signal: controller.signal })
       .then((res) => {
         if (res.status === 403) {
           alert("Forbidden");
@@ -134,6 +157,13 @@ export default function usePagedList<T>(
         setError(err instanceof Error ? err : new Error(String(err)));
       })
       .finally(() => {
+         if (process.env.NODE_ENV !== "production") {
+          console.debug(
+            "[usePagedList] api end",
+            requestUrl,
+            `${Date.now() - requestStartedAt}ms`
+          );
+        }
         setIsLoading(false);
       });
 
