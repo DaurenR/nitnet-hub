@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
+const SEARCH_DEBOUNCE_MS = 350;
+
 interface Field {
   name: string;
   label: string;
@@ -20,14 +22,14 @@ export default function SearchForm({ fields, onSearch }: Props) {
     setValues((prev) => ({ ...prev, [name]: value }));
   };
 
-  const firstRun = useRef(true);
+  const isFirstRun = useRef(true);
   useEffect(() => {
-    if (firstRun.current) {
-      firstRun.current = false;
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
       return;
     }
-    const timer = setTimeout(() => onSearch(values), 350);
-    return () => clearTimeout(timer);
+    const timer = window.setTimeout(() => onSearch(values), SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
   }, [values, onSearch]);
 
   return (
